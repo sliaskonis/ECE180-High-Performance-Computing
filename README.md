@@ -1,6 +1,6 @@
 # High Performance Computing (HPC) Class Assignments
 
-This repository contains the assignments and projects completed during my **High Performance Computing (HPC)** course at [University Name]. The coursework focuses on utilizing advanced computing techniques to solve complex, computationally intensive problems efficiently.
+This repository contains the assignments and projects completed during my **High Performance Computing (HPC)** course at University of Thessaly. The coursework focuses on utilizing advanced computing techniques to solve complex, computationally intensive problems efficiently.
 
 ## Table of Contents
 
@@ -9,8 +9,6 @@ This repository contains the assignments and projects completed during my **High
 - [Assignments](#assignments)
 - [Installation](#installation)
 - [Usage](#usage)
-- [Contributing](#contributing)
-- [License](#license)
 
 ## Overview
 
@@ -34,8 +32,10 @@ The projects and assignments were built using the following tools and libraries:
 
 ## Assignments
 
-1. **Assignment 1: Introduction to Parallel Programming**
-    - Implemented parallel algorithms using OpenMP.
+1. **Assignment 1: Code optimizations on Sobel filter**
+    - Implement code optimization techniques to enhance the performance of the Sobel filter, focusing on methods like: loop interchange, loop unrolling, function inlining, etc.
+    - Use compiler optimizations to further improve the code performance (e.g register allocation, restrict pointer declarations)
+    - Code profiling and analysis
     
 2. **Assignment 2: Message Passing with MPI**
     - Explored communication between distributed systems using MPI.
