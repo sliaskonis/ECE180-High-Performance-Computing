@@ -76,10 +76,4 @@ For MPI or CUDA assignments, specific compilation instructions are provided with
 
 Each assignment folder includes detailed instructions for compiling and running the code. Refer to the `README.md` inside each folder for assignment-specific details.
 
-## Contributing
 
-If you would like to contribute or report any issues, feel free to submit a pull request or open an issue. Contributions are always welcome!
-
-## License
-
-This project is licensed under the [MIT License](LICENSE). Feel free to use the code for educational purposes.
