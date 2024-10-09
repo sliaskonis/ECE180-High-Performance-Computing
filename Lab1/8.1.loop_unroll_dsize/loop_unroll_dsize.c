@@ -8,6 +8,7 @@
 #include <errno.h>
 
 #define SIZE	4096
+#define DSIZE 16777216
 #define INPUT_FILE	"input.grey"
 #define OUTPUT_FILE	"output_sobel.grey"
 #define GOLDEN_FILE	"golden.grey"
@@ -28,7 +29,7 @@ int convolution2D(int posy, int posx, const unsigned char *input, char operator[
  * grayscale image is represented by a value between 0 and 255 (an unsigned *
  * character). The arrays (and the files) contain these values in row-major *
  * order (element after element within each row and row after row. 			*/
-unsigned char input[SIZE*SIZE], output[SIZE*SIZE], golden[SIZE*SIZE];
+unsigned char input[DSIZE], output[DSIZE], golden[DSIZE];
 
 /* The main computational function of the program. The input, output and *
  * golden arguments are pointers to the arrays used to store the input   *
@@ -48,9 +49,25 @@ double sobel(unsigned char *input, unsigned char *output, unsigned char *golden)
      * algorithm, therefore make sure to initialize them with 0s.		 */
 	memset(output, 0, SIZE*sizeof(unsigned char));
 	memset(&output[SIZE*(SIZE-1)], 0, SIZE*sizeof(unsigned char));
-	for (i = 1; i < SIZE-1; i++) {
-		output[i*SIZE] = 0;
-		output[i*SIZE + SIZE - 1] = 0;
+	for (i = 1; i < (SIZE-1)/4; i++) {
+        int temp = i*SIZE;
+		output[temp] = 0;
+        output[temp+1] = 0;
+        output[temp+2] = 0;
+        output[temp+3] = 0;
+        output[temp+4] = 0;
+        output[temp+5] = 0;
+        output[temp+6] = 0;
+        output[temp+7] = 0;
+        temp = temp + SIZE;
+		output[temp - 1] = 0;
+        output[temp - 2] = 0;
+        output[temp - 3] = 0;
+        output[temp - 4] = 0;
+        output[temp - 5] = 0;
+        output[temp - 6] = 0;
+        output[temp - 7] = 0;
+        output[temp - 8] = 0;
 	}
 
 	/* Open the input, output, golden files, read the input and golden    *
@@ -76,8 +93,8 @@ double sobel(unsigned char *input, unsigned char *output, unsigned char *golden)
 		exit(1);
 	}    
 
-	fread(input, sizeof(unsigned char), SIZE*SIZE, f_in);
-	fread(golden, sizeof(unsigned char), SIZE*SIZE, f_golden);
+	fread(input, sizeof(unsigned char), DSIZE, f_in);
+	fread(golden, sizeof(unsigned char), DSIZE, f_golden);
 	fclose(f_in);
 	fclose(f_golden);
   
@@ -144,7 +161,7 @@ double sobel(unsigned char *input, unsigned char *output, unsigned char *golden)
 		}
 	}
   
-	PSNR /= (double)(SIZE*SIZE);
+	PSNR /= (double)(DSIZE);
 	PSNR = 10*log10(65536/PSNR);
 
 	/* This is the end of the main computation. Take the end time,  *
@@ -157,7 +174,7 @@ double sobel(unsigned char *input, unsigned char *output, unsigned char *golden)
 
   
 	/* Write the output file */
-	fwrite(output, sizeof(unsigned char), SIZE*SIZE, f_out);
+	fwrite(output, sizeof(unsigned char), DSIZE, f_out);
 	fclose(f_out);
   
 	return PSNR;
