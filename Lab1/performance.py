@@ -40,7 +40,7 @@ if __name__ == "__main__":
     rows = 10
     stats = [[0.0 for _ in range(loops)] for _ in range(rows)]
     #stats=[0]*10
-    '''
+    
     subprocess.call(["icx", "-Wall", "-O0", "1.loop_interchange_1/sobel_loop_interchange_1.c", "-o", "Lab1"]) 
     for num in range(loops):
         thread = threading.Thread(target=run_script, args=(num,0))
@@ -82,7 +82,7 @@ if __name__ == "__main__":
         thread.start()
         thread.join()
     print("Done6.\n")
-    '''
+    
     subprocess.call(["icx", "-Wall", "-O0", "7.function_inlining/function_inlining.c", "-o", "Lab1"]) 
     for num in range(loops):
         thread = threading.Thread(target=run_script, args=(num,6))
