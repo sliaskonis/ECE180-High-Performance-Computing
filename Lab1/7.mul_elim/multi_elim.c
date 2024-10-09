@@ -49,25 +49,9 @@ double sobel(unsigned char *input, unsigned char *output, unsigned char *golden)
      * algorithm, therefore make sure to initialize them with 0s.		 */
 	memset(output, 0, SIZE*sizeof(unsigned char));
 	memset(&output[SIZE*(SIZE-1)], 0, SIZE*sizeof(unsigned char));
-	for (i = 1; i < (SIZE-1)/4; i++) {
-        int temp = i*SIZE;
-		output[temp] = 0;
-        output[temp+1] = 0;
-        output[temp+2] = 0;
-        output[temp+3] = 0;
-        output[temp+4] = 0;
-        output[temp+5] = 0;
-        output[temp+6] = 0;
-        output[temp+7] = 0;
-        temp = temp + SIZE;
-		output[temp - 1] = 0;
-        output[temp - 2] = 0;
-        output[temp - 3] = 0;
-        output[temp - 4] = 0;
-        output[temp - 5] = 0;
-        output[temp - 6] = 0;
-        output[temp - 7] = 0;
-        output[temp - 8] = 0;
+	for (i = 1; i < SIZE-1; i++) {
+		output[i*SIZE] = 0;
+		output[i*SIZE + SIZE - 1] = 0;
 	}
 
 	/* Open the input, output, golden files, read the input and golden    *
@@ -101,11 +85,12 @@ double sobel(unsigned char *input, unsigned char *output, unsigned char *golden)
 	/* This is the main computation. Get the starting time. */
 	clock_gettime(CLOCK_MONOTONIC_RAW, &tv1);
 	/* For each pixel of the output image */
-    int it=0;
+    int it=SIZE-2;
 	for (i=1; i<SIZE-1; i+=1) { //1. loop interchange
+        it = it + 2;
 		for (j=1; j<SIZE-1; j+=1 ) {
 			
-            it = i*SIZE + j;
+            it = it +1;
             /* Apply the sobel filter and calculate the magnitude *
 			 * of the derivative.								  */
 			res = 0;

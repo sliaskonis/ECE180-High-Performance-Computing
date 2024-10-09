@@ -8,6 +8,7 @@
 #include <errno.h>
 
 #define SIZE	4096
+#define DSIZE 16777216
 #define INPUT_FILE	"input.grey"
 #define OUTPUT_FILE	"output_sobel.grey"
 #define GOLDEN_FILE	"golden.grey"
@@ -28,39 +29,7 @@ int convolution2D(int posy, int posx, const unsigned char *input, char operator[
  * grayscale image is represented by a value between 0 and 255 (an unsigned *
  * character). The arrays (and the files) contain these values in row-major *
  * order (element after element within each row and row after row. 			*/
-unsigned char input[SIZE*SIZE], output[SIZE*SIZE], golden[SIZE*SIZE];
-
-
-/* Implement a 2D convolution of the matrix with the operator */
-/* posy and posx correspond to the vertical and horizontal disposition of the *
- * pixel we process in the original image, input is the input image and       *
- * operator the operator we apply (horizontal or vertical). The function ret. *
- * value is the convolution of the operator with the neighboring pixels of the*
- * pixel we process.														  */
-int convolution2D(int posy, int posx, const unsigned char *input, char operator[][3]) {
-	int res = 0;
-
-    // 1st iteration
-    int it1= (posy - 1)*SIZE +posx;
-    res += input[it1 - 1] * operator[0][0];
-    res += input[it1] * operator[0][1];
-    res += input[it1 + 1] * operator[0][2];
-
-    // 2nd iteration
-    int it2 = posy*SIZE + posx;
-    res += input[it2 - 1] * operator[1][0];
-    res += input[it2] * operator[1][1];
-    res += input[it2 + 1] * operator[1][2];
-
-    // 3rd iteration
-    int it3 = (posy + 1)*SIZE + posx;
-    res += input[it3 -1] * operator[2][0];
-    res += input[it3] * operator[2][1];
-    res += input[it3 + 1] * operator[2][2];
-
-	return(res);
-}
-
+unsigned char input[DSIZE], output[DSIZE], golden[DSIZE];
 
 /* The main computational function of the program. The input, output and *
  * golden arguments are pointers to the arrays used to store the input   *
@@ -108,23 +77,66 @@ double sobel(unsigned char *input, unsigned char *output, unsigned char *golden)
 		exit(1);
 	}    
 
-	fread(input, sizeof(unsigned char), SIZE*SIZE, f_in);
-	fread(golden, sizeof(unsigned char), SIZE*SIZE, f_golden);
+	fread(input, sizeof(unsigned char), DSIZE, f_in);
+	fread(golden, sizeof(unsigned char), DSIZE, f_golden);
 	fclose(f_in);
 	fclose(f_golden);
   
 	/* This is the main computation. Get the starting time. */
 	clock_gettime(CLOCK_MONOTONIC_RAW, &tv1);
 	/* For each pixel of the output image */
-    int it=0;
-	for (i=1; i<SIZE-1; i+=1) {
+    int it=SIZE-2;
+	for (i=1; i<SIZE-1; i+=1) { //1. loop interchange
+        it = it + 2;
 		for (j=1; j<SIZE-1; j+=1 ) {
 			
-            it = i*SIZE + j;
+            it = it +1;
             /* Apply the sobel filter and calculate the magnitude *
 			 * of the derivative.								  */
-			p = pow(convolution2D(i, j, input, horiz_operator), 2) + 
-				pow(convolution2D(i, j, input, vert_operator), 2);
+			res = 0;
+            int temp = it - SIZE;
+			res += input[temp -1] * horiz_operator[0][0];
+			res += input[temp] * horiz_operator[0][1];
+			res += input[temp + 1] * horiz_operator[0][2];
+
+			// 2nd iteration
+            temp = it;
+			res += input[temp -1] * horiz_operator[1][0];
+			res += input[temp] * horiz_operator[1][1];
+			res += input[temp + 1] * horiz_operator[1][2];
+
+			// 3rd iteration
+            temp = it + SIZE;
+			res += input[temp -1] * horiz_operator[2][0];
+			res += input[temp] * horiz_operator[2][1];
+			res += input[temp + 1] * horiz_operator[2][2];
+
+			p = pow(res,2);
+			res=0;
+
+			// 1st iteration
+            temp = it - SIZE;
+			res += input[temp -1] * vert_operator[0][0];
+			res += input[temp] * vert_operator[0][1];
+			res += input[temp + 1] * vert_operator[0][2];
+
+			// 2nd iteration
+            temp = it;
+			res += input[temp - 1] * vert_operator[1][0];
+			res += input[temp + j] * vert_operator[1][1];
+			res += input[temp + 1] * vert_operator[1][2];
+
+			// 3rd iteration
+            temp = it + SIZE;
+			res += input[temp -1] * vert_operator[2][0];
+			res += input[temp] * vert_operator[2][1];
+			res += input[temp + 1] * vert_operator[2][2];
+
+			p = p + pow(res,2);
+
+
+			//p = pow(convolution2D(i, j, input, horiz_operator), 2) + 
+				//pow(convolution2D(i, j, input, vert_operator), 2);
 			res = (int)sqrt(p);
 			/* If the resulting value is greater than 255, clip it *
 			 * to 255.											   */
@@ -140,7 +152,7 @@ double sobel(unsigned char *input, unsigned char *output, unsigned char *golden)
 		}
 	}
   
-	PSNR /= (double)(SIZE*SIZE);
+	PSNR /= (double)(DSIZE);
 	PSNR = 10*log10(65536/PSNR);
 
 	/* This is the end of the main computation. Take the end time,  *
@@ -153,7 +165,7 @@ double sobel(unsigned char *input, unsigned char *output, unsigned char *golden)
 
   
 	/* Write the output file */
-	fwrite(output, sizeof(unsigned char), SIZE*SIZE, f_out);
+	fwrite(output, sizeof(unsigned char), DSIZE, f_out);
 	fclose(f_out);
   
 	return PSNR;
@@ -169,4 +181,3 @@ int main(int argc, char* argv[])
 
 	return 0;
 }
-
