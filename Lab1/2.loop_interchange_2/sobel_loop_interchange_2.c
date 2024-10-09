@@ -136,10 +136,15 @@ double sobel(unsigned char *input, unsigned char *output, unsigned char *golden)
 	 * calculate the duration of the computation and report it. 	*/
 	clock_gettime(CLOCK_MONOTONIC_RAW, &tv2);
 
+#ifdef DEBUG
 	printf ("Total time = %10g seconds\n",
 			(double) (tv2.tv_nsec - tv1.tv_nsec) / 1000000000.0 +
 			(double) (tv2.tv_sec - tv1.tv_sec));
-
+#else	
+	printf ("%10g\n",
+			(double) (tv2.tv_nsec - tv1.tv_nsec) / 1000000000.0 +
+			(double) (tv2.tv_sec - tv1.tv_sec));
+#endif
   
 	/* Write the output file */
 	fwrite(output, sizeof(unsigned char), SIZE*SIZE, f_out);
@@ -153,8 +158,10 @@ int main(int argc, char* argv[])
 {
 	double PSNR;
 	PSNR = sobel(input, output, golden);
+#ifdef DEBUG
 	printf("PSNR of original Sobel and computed Sobel image: %g\n", PSNR);
 	printf("A visualization of the sobel filter can be found at " OUTPUT_FILE ", or you can run 'make image' to get the jpg\n");
+#endif
 
 	return 0;
 }
