@@ -55,7 +55,7 @@ def plot_averages(program_stats):
     # Add labels and title
     plt.xlabel('Optimizations', fontsize=12)
     plt.ylabel('Average Execution Time (seconds)', fontsize=12)
-    plt.title('Average Execution Times of Programs', fontsize=14)
+    plt.title('Average Execution Times', fontsize=14)
     
     # Rotate program names for better readability
     plt.xticks(rotation=45, ha='right', fontsize=10)
