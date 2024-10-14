@@ -1,13 +1,20 @@
 #!/bin/bash
 
-# Check if the user provided a number of times to execute the program
-if [ $# -ne 1 ]; then
-  echo "Usage: $0 <number_of_executions>"
+# Check if the user provided the number of executions and a compilation flag
+if [ $# -ne 2 ]; then
+  echo "Usage: $0 <number_of_executions> <-O0|-fast>"
   exit 1
 fi
 
-# Assign the user input to N
+# Assign the user inputs to variables
 N=$1
+compilation_flag=$2
+
+# Ensure the compilation flag is either -O0 or -fast
+if [[ "$compilation_flag" != "-O0" && "$compilation_flag" != "-fast" ]]; then
+  echo "Error: Compilation flag must be either -O0 or -fast"
+  exit 1
+fi
 
 # Create or overwrite the CSV file
 csv_file="times.csv"
@@ -23,12 +30,12 @@ for dir in */; do
     # Extract the base name of the C file (without the .c extension)
     base_name=$(basename "$c_file" .c)
     
-    # Compile the C file
-    icx -O0 "$c_file" -o "$dir/$base_name"
+    # Compile the C file with the specified flag
+    icx "$compilation_flag" "$c_file" -o "$dir/$base_name"
     
     if [ $? -eq 0 ]; then
-      # Write the file name to the CSV file
-      echo "$base_name" >> "$csv_file"
+      # Write the file name and compilation flag to the CSV file
+      echo "$base_name ($compilation_flag)" >> "$csv_file"
       
       # Run the compiled program N times and append the results to the CSV
       for (( i=1; i<=N; i++ )); do
