@@ -16,11 +16,13 @@ To measure and compare the execution times of each optimization, a script named 
 ### 1. **Running the Performance Script**  
    To execute the performance test for any optimization, use the following command:
 
-   ```bash
+1. **Execute script**:
+    ```bash
    bash ./getTimes.sh <number_of_runs> <optimization_level>
-   ```
-	- <number_of_runs>: The number of times you want to run each optimization for benchmarking.
-	- <optimization_level>: Can be either -O0 (no optimizations) or -fast (maximum optimization level).
+    ```
+
+- <number_of_runs>: The number of times you want to run each optimization for benchmarking.
+- <optimization_level>: Can be either -O0 (no optimizations) or -fast (maximum optimization level).
 
 
 After collecting the execution times, you can visualize the results by running the getStats.py script, which generates a comparison graph.
