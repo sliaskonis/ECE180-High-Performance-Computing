@@ -19,8 +19,8 @@ all: seq
 
 CC             = gcc
 
-INCFLAGS    = -I.
-OPTFLAGS    = -O4 -DNDEBUG
+INCFLAGS    = -I. 
+OPTFLAGS    = -O4 -DNDEBUG -fopenmp -g
 LDFLAGS     = $(OPTFLAGS)
 
 
