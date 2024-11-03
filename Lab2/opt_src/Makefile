@@ -15,11 +15,11 @@
 .KEEP_STATE:
 
 # Compiler and flags
-CC          = gcc
+CC          = icx
 INCFLAGS    = -I.
-OPTFLAGS    = -O4 -DNDEBUG -g
-CFLAGS      = $(OPTFLAGS) $(INCFLAGS) -fopenmp
-LDFLAGS     = $(OPTFLAGS) -fopenmp
+OPTFLAGS    = -fast -DNDEBUG -g
+CFLAGS      = $(OPTFLAGS) $(INCFLAGS) -qopenmp
+LDFLAGS     = $(OPTFLAGS) -qopenmp
 
 # Header files and common source files
 H_FILES     = kmeans.h
