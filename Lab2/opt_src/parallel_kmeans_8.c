@@ -24,53 +24,6 @@
 #include <omp.h>
 #include "kmeans.h"
 
-/*----< euclid_dist_2() >----------------------------------------------------*/
-/* square of Euclid distance between two multi-dimensional points            */
-__inline static
-float euclid_dist_2(int    numdims,  /* no. dimensions */
-                    float *coord1,   /* [numdims] */
-                    float *coord2)   /* [numdims] */
-{
-    int i;
-    float ans=0.0;
-
-    for (i=0; i<numdims; i++)
-        ans += (coord1[i]-coord2[i]) * (coord1[i]-coord2[i]);
-
-    return(ans);
-}
-
-/*----< find_nearest_cluster() >---------------------------------------------*/
-__inline static
-int find_nearest_cluster(int     numClusters, /* no. clusters */
-                         int     numCoords,   /* no. coordinates */
-                         float  *object,      /* [numCoords] */
-                         float **clusters)    /* [numClusters][numCoords] */
-{
-    int   index, i, j;
-    float dist = 0.0, min_dist = 0.0;
-
-    /* find the cluster id that has min distance to object */
-    index    = 0;
-
-
-    for (i=0; i<numCoords; i++) {
-        min_dist += (object[i]-clusters[0][i]) * (object[i]-clusters[0][i]);
-    }
-
-    for (i=1; i<numClusters; i++) {
-        for (j=0; j<numCoords; j++) {
-            dist += (object[j]-clusters[i][j]) * (object[j]-clusters[i][j]);
-        }
-        /* no need square root */
-        if (dist < min_dist) { /* find the min and its array index */
-            min_dist = dist;
-            index    = i;
-        }
-    }
-    return(index);
-}
-
 /*----< seq_kmeans() >-------------------------------------------------------*/
 /* return an array of cluster centers of size [numClusters][numCoords]       */
 int seq_kmeans(float **objects,      /* in: [numObjs][numCoords] */
@@ -82,10 +35,10 @@ int seq_kmeans(float **objects,      /* in: [numObjs][numCoords] */
                float **clusters)     /* out: [numClusters][numCoords] */
 
 {
-    int      i, j, m, n, index, loop=0;
+    int      i, j, k, index, loop=0;
     int     *newClusterSize; /* [numClusters]: no. objects assigned in each
                                 new cluster */
-    float    delta;          /* % of objects change their clusters */
+    float    delta, min_dist, dist;          /* % of objects change their clusters */
     float  *newClusters;    /* [numClusters][numCoords] */
     
     /* initialize membership[] */
@@ -102,26 +55,24 @@ int seq_kmeans(float **objects,      /* in: [numObjs][numCoords] */
         delta = 0.0;
 	    #pragma omp parallel
         { 
-            #pragma omp for private(j, index, m, n) reduction(+:delta, newClusterSize[:numClusters], newClusters[:numClusters*numCoords]) schedule(auto)
+            #pragma omp for private(j, index, k, min_dist, dist) reduction(+:delta, newClusterSize[:numClusters], newClusters[:numClusters*numCoords]) schedule(auto)
             for (i=0; i<numObjs; i++) {
                 /* find the array index of nestest cluster center */
-     
-                float dist = 0.0, min_dist = 0.0;
 
                 index = 0;
+                min_dist=0.0;
+                for (k=0; k<numCoords; k++)
+                    min_dist += (objects[i][k]-clusters[0][k]) * (objects[i][k]-clusters[0][k]);
 
-                for (m=0; m<numCoords; m++) {
-                    min_dist += (objects[i][m]-clusters[0][m]) * (objects[i][m]-clusters[0][m]);
-                }
+                for (j=1; j<numClusters; j++) {
+                    dist=0.0;
+                    for (k=0; k<numCoords; k++)
+                        dist += (objects[i][k]-clusters[j][k]) * (objects[i][k]-clusters[j][k]);
 
-                for (m=1; m<numClusters; m++) {
-                    for (n=0; n<numCoords; n++) {
-                        dist += (objects[i][n]-clusters[m][n]) * (objects[i][n]-clusters[m][n]);
-                    }
                     /* no need square root */
                     if (dist < min_dist) { /* find the min and its array index */
                         min_dist = dist;
-                        index    = m;
+                        index    = j;
                     }
                 }
 
