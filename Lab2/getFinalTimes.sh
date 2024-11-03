@@ -16,17 +16,17 @@ do
     export OMP_NUM_THREADS=$threads
     
     # Run the sequential version 22 times and save results with thread count in filename
-    for i in {1..22}
+    for i in {1..17}
     do 
-        ./seq_main -o -b -n 2000 -i ../Image_data/color17695.bin
+        ./seq_main -o -b -n 2000 -i ../Image_data/texture17695.bin
     done > ../results/seq_times_${threads}.txt
 
     # Run each parallel version 22 times and save results with thread count in filename
     for j in {1..8}
     do
-        for i in {1..22}
+        for i in {1..17}
         do 
-            ./par_main_$j -o -b -n 2000 -i ../Image_data/color17695.bin
+            ./par_main_$j -o -b -n 2000 -i ../Image_data/texture17695.bin
         done > ../results/parallel_${j}_times_${threads}.txt
     done
 done
