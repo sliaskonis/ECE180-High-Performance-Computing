@@ -22,13 +22,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <omp.h>
+#include <immintrin.h> 
 #include "kmeans.h"
 
 /*----< euclid_dist_2() >----------------------------------------------------*/
 /* square of Euclid distance between two multi-dimensional points            */
-#include <immintrin.h>  // For SIMD intrinsics
 
-__inline static float euclid_dist_2(int numdims, float *restrict coord1, float *restrict coord2) {
+
+__inline static 
+float euclid_dist_2(int numdims, float *restrict coord1, float *restrict coord2) {
     float ans = 0.0f;
     int i;
 
