@@ -59,8 +59,8 @@ clean:
 	rm -rf *.o $(EXECS) core* .make.state \
 		*.cluster_centres *.membership \
 		*.cluster_centres.nc *.membership.nc \
-		Image_data/*.cluster_centres Image_data/*.membership \
-		Image_data/*.cluster_centres.nc Image_data/*.membership.nc
+		../Image_data/*.cluster_centres ../Image_data/*.membership \
+		../Image_data/*.cluster_centres.nc ../Image_data/*.membership.nc
 
 check: all
 	# Sequential K-means
