@@ -24,6 +24,64 @@
 #include <omp.h>
 #include "kmeans.h"
 
+/*----< euclid_dist_2() >----------------------------------------------------*/
+/* square of Euclid distance between two multi-dimensional points            */
+#include <immintrin.h>  // For SIMD intrinsics
+
+__inline static float euclid_dist_2(int numdims, float *restrict coord1, float *restrict coord2) {
+    float ans = 0.0f;
+    int i;
+
+    // Initialize SIMD sum to 0
+    __m128 sum = _mm_setzero_ps();
+
+    for (i = 0; i <= numdims - 4; i += 4) {
+        __m128 vec1 = _mm_loadu_ps(&coord1[i]);
+        __m128 vec2 = _mm_loadu_ps(&coord2[i]);
+        __m128 diff = _mm_sub_ps(vec1, vec2);
+        sum = _mm_add_ps(sum, _mm_mul_ps(diff, diff));
+    }
+
+    // Perform horizontal addition on sum
+    float tmp[4];
+    _mm_storeu_ps(tmp, sum);
+    ans = tmp[0] + tmp[1] + tmp[2] + tmp[3];
+
+    // Process remaining elements
+    for (; i < numdims; i++) {
+        float diff = coord1[i] - coord2[i];
+        ans += diff * diff;
+    }
+
+    return ans;
+}
+
+
+/*----< find_nearest_cluster() >---------------------------------------------*/
+__inline static
+int find_nearest_cluster(int     numClusters, /* no. clusters */
+                         int     numCoords,   /* no. coordinates */
+                         float  *object,      /* [numCoords] */
+                         float **clusters)    /* [numClusters][numCoords] */
+{
+    int   index, i;
+    float dist, min_dist;
+
+    /* find the cluster id that has min distance to object */
+    index    = 0;
+    min_dist = euclid_dist_2(numCoords, object, clusters[0]);
+
+    for (i=1; i<numClusters; i++) {
+        dist = euclid_dist_2(numCoords, object, clusters[i]);
+        /* no need square root */
+        if (dist < min_dist) { /* find the min and its array index */
+            min_dist = dist;
+            index    = i;
+        }
+    }
+    return(index);
+}
+
 /*----< seq_kmeans() >-------------------------------------------------------*/
 /* return an array of cluster centers of size [numClusters][numCoords]       */
 int seq_kmeans(float **objects,      /* in: [numObjs][numCoords] */
@@ -35,12 +93,12 @@ int seq_kmeans(float **objects,      /* in: [numObjs][numCoords] */
                float **clusters)     /* out: [numClusters][numCoords] */
 
 {
-    int      i, j, k, index, loop=0;
+    int      i, j, index, loop=0;
     int     *newClusterSize; /* [numClusters]: no. objects assigned in each
                                 new cluster */
-    float    delta, min_dist, dist;          /* % of objects change their clusters */
+    float    delta;          /* % of objects change their clusters */
     float  *newClusters;    /* [numClusters][numCoords] */
-    
+
     /* initialize membership[] */
     for (i=0; i<numObjs; i++) membership[i] = -1;
 
@@ -55,26 +113,11 @@ int seq_kmeans(float **objects,      /* in: [numObjs][numCoords] */
         delta = 0.0;
 	    #pragma omp parallel
         { 
-            #pragma omp for private(j, index, k, min_dist, dist) reduction(+:delta, newClusterSize[:numClusters], newClusters[:numClusters*numCoords]) schedule(dynamic)
+            #pragma omp for private(j, index) reduction(+:delta, newClusterSize[:numClusters], newClusters[:numClusters*numCoords]) schedule(auto)
             for (i=0; i<numObjs; i++) {
                 /* find the array index of nestest cluster center */
-
-                index = 0;
-                min_dist=0.0;
-                for (k=0; k<numCoords; k++)
-                    min_dist += (objects[i][k]-clusters[0][k]) * (objects[i][k]-clusters[0][k]);
-
-                for (j=1; j<numClusters; j++) {
-                    dist=0.0;
-                    for (k=0; k<numCoords; k++)
-                        dist += (objects[i][k]-clusters[j][k]) * (objects[i][k]-clusters[j][k]);
-
-                    /* no need square root */
-                    if (dist < min_dist) { /* find the min and its array index */
-                        min_dist = dist;
-                        index    = j;
-                    }
-                }
+                index = find_nearest_cluster(numClusters, numCoords, objects[i],
+                                            clusters);
 
                 /* if membership changes, increase delta by 1 */
                 if (membership[i] != index) delta += 1.0;
@@ -90,7 +133,7 @@ int seq_kmeans(float **objects,      /* in: [numObjs][numCoords] */
             }
 
             /* average the sum and replace old cluster center with newClusters */
-            #pragma omp for private(j) schedule(static)
+            #pragma omp for private(j) schedule(auto)
             for (i=0; i<numClusters; i++) {
                 for (j=0; j<numCoords; j++) {
                     if (newClusterSize[i] > 0)
