@@ -16,7 +16,7 @@ do
 done
 
 # Loop over each parallel version and each input file
-for exe in par_main_{1..8}
+for exe in par_main_{1..9}
 do
     for i in "${input_files[@]}"
     do
@@ -34,7 +34,7 @@ do
     done
 done
 
-echo "Number of correct results: $correctResults/$(( ${#input_files[@]} * 8))"
+echo "Number of correct results: $correctResults/$(( ${#input_files[@]} * 9))"
 
 make clean
 
