@@ -19,7 +19,7 @@ CC          = icx
 INCFLAGS    = -I.
 OPTFLAGS    = -fast -DNDEBUG -g
 CFLAGS      = $(OPTFLAGS) $(INCFLAGS) -qopenmp
-LDFLAGS     = $(OPTFLAGS) -qopenmp
+LDFLAGS     = $(OPTFLAGS) -qopenmp -mavx
 
 # Header files and common source files
 H_FILES     = kmeans.h
@@ -28,10 +28,10 @@ COMMON_OBJ  = $(COMMON_SRC:.c=.o)
 
 # Source files for each executable
 SEQ_SRC     = printless_main.c seq_kmeans.c
-PAR_SRC     = parallel_kmeans_1.c parallel_kmeans_2.c parallel_kmeans_3.c parallel_kmeans_4.c parallel_kmeans_5 parallel_kmeans_6.c parallel_kmeans_7.c parallel_kmeans_8.c
+PAR_SRC     = parallel_kmeans_1.c parallel_kmeans_2.c parallel_kmeans_3.c parallel_kmeans_4.c parallel_kmeans_5 parallel_kmeans_6.c parallel_kmeans_7.c parallel_kmeans_8.c parallel_kmeans_9.c
 
 # Executable names
-EXECS       = seq_main par_main_1 par_main_2 par_main_3 par_main_4 par_main_5 par_main_6 par_main_7 par_main_8
+EXECS       = seq_main par_main_1 par_main_2 par_main_3 par_main_4 par_main_5 par_main_6 par_main_7 par_main_8 par_main_9
 
 all: $(EXECS)
 
