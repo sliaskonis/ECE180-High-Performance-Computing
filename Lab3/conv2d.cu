@@ -5,6 +5,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 #include <cuda_runtime.h>
 
 unsigned int filter_radius;
@@ -21,7 +22,7 @@ __global__ void convolutionRowGPU(float *h_Dst, float *h_Src, float *h_Filter,
     int tx=threadIdx.x;
     int ty=threadIdx.y;
         float sum=0;
-    for (k = -filterR; k <= filterR; k++) {
+    for (int k = -filterR; k <= filterR; k++) {
         int d = ty + k;
         if (d >= 0 && d < imageW) {
           sum += h_Src[tx * imageW + d] * h_Filter[filterR - k];
@@ -39,7 +40,7 @@ __global__ void convolutionColumnGPU(float *h_Dst, float *h_Src, float *h_Filter
     int tx=threadIdx.x;
     int ty=threadIdx.y;
         float sum=0;
-    for (k = -filterR; k <= filterR; k++) {
+    for (int k = -filterR; k <= filterR; k++) {
         int d = tx + k;
         if (d >= 0 && d < imageW) {
           sum += h_Src[d * imageW + ty] * h_Filter[filterR - k];
@@ -104,30 +105,28 @@ int main(int argc, char **argv) {
     *h_Filter,
     *h_Input,
     *h_Buffer,
-    *h_OutputCPU;
+    *h_OutputCPU,
     *h_OutputGPU;
 
     float
     *d_Filter,
     *d_Input,
+    *d_Buffer,
     *d_OutputGPU;
 
     int imageW;
     int imageH;
     unsigned int i;
 
-	printf("Enter filter radius : ");
-	scanf("%d", &filter_radius);
-
     // We assume that imageW = imageH = N, where N is given by the user.
     if (argc != 3) {
         printf("Usage: %s <image size> <filter radius>\n", argv[0]);
-        printf("Image size must be a power of 2");
+        printf("Image size must be a power of 2\n");
         exit(1);
     }
 
-    imageW = argv[1];
-    filter_radius = argv[2];
+    imageW = atoi(argv[1]);
+    filter_radius = atoi(argv[2]);
     imageH = imageW;
 
     printf("Image Width x Height = %i x %i\n\n", imageW, imageH);
@@ -148,6 +147,7 @@ int main(int argc, char **argv) {
     /************************ Device memory allocation ************************/
     cudaMalloc((void**) &d_Filter, imageW*sizeof(float));
     cudaMalloc((void**) &d_Input, imageW*imageH*sizeof(float));
+    cudaMalloc((void**) &d_Buffer, imageW*imageH*sizeof(float));
     cudaMalloc((void**) &d_OutputGPU, imageW*imageH*sizeof(float));
 
     // Initialize Filter and Image.
@@ -181,7 +181,7 @@ int main(int argc, char **argv) {
     dim3 dimGrid(1, 1);
     dim3 dimBlock(imageW, imageH);
 
-    convolutionRowGPU<<<dimGrid, dimBlock>>>(d_OutputGPU, d_Input, d_Filter, imageW, imageH, filter_radius);
+    convolutionRowGPU<<<dimGrid, dimBlock>>>(d_Buffer, d_Input, d_Filter, imageW, imageH, filter_radius);
     convolutionColumnGPU<<<dimGrid, dimBlock>>>(d_OutputGPU, d_Buffer, d_Filter, imageW, imageH, filter_radius);
     
     /********************** Verify Correctness **********************/
@@ -202,9 +202,9 @@ int main(int argc, char **argv) {
     free(h_Filter);
     
     // Free Device allocated memory
-    cudafree(d_Filter);
-    cudafree(d_Input);
-    cudafree(d_OutputGPU);
+    cudaFree(d_Filter);
+    cudaFree(d_Input);
+    cudaFree(d_OutputGPU);
 
     // Reset the device and exit
     cudaDeviceReset();
