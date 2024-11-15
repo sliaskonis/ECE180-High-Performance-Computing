@@ -70,7 +70,7 @@ __host__ void convolutionRowCPU(float *h_Dst, float *h_Src, float *h_Filter,
       }
     }
   }
-        
+
 }
 
 // Reference column convolution filter
@@ -177,6 +177,13 @@ int main(int argc, char **argv) {
 
     cudaMemcpy(h_OutputGPU, d_OutputGPU, imageW*imageH*sizeof(float),cudaMemcpyDeviceToHost);
 
+    /**********************  Kernel Launch Configuration ***************************/
+    dim3 dimGrid(1, 1);
+    dim3 dimBlock(imageW, imageH);
+
+    convolutionRowGPU<<<dimGrid, dimBlock>>>(d_OutputGPU, d_Input, d_Filter, imageW, imageH, filter_radius);
+    convolutionColumnGPU<<<dimGrid, dimBlock>>>(d_OutputGPU, d_Buffer, d_Filter, imageW, imageH, filter_radius);
+    
     /********************** Verify Correctness **********************/
     printf("Verifying results...\n");
     float error = 0;
