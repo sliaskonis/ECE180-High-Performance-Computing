@@ -12,7 +12,7 @@ unsigned int filter_radius;
 
 #define FILTER_LENGTH 	(2 * filter_radius + 1)
 #define ABS(val)  	((val)<0.0 ? (-(val)) : (val))
-#define accuracy  	0.00005 
+#define accuracy    0.00005 
 
 /***************************************
  *   Reference Row Convolution Filter  *
@@ -23,12 +23,12 @@ __global__ void convolutionRowGPU(float *h_Dst, float *h_Src, float *h_Filter,
     int ty=threadIdx.y;
         float sum=0;
     for (int k = -filterR; k <= filterR; k++) {
-        int d = ty + k;
+        int d = tx + k;
         if (d >= 0 && d < imageW) {
-          sum += h_Src[tx * imageW + d] * h_Filter[filterR - k];
+          sum += h_Src[ty * imageW + d] * h_Filter[filterR - k];
         }     
 
-        h_Dst[tx * imageW + ty] = sum;
+        h_Dst[ty * imageW + tx] = sum;
     }
 }
 
@@ -41,12 +41,12 @@ __global__ void convolutionColumnGPU(float *h_Dst, float *h_Src, float *h_Filter
     int ty=threadIdx.y;
         float sum=0;
     for (int k = -filterR; k <= filterR; k++) {
-        int d = tx + k;
+        int d = ty + k;
         if (d >= 0 && d < imageW) {
-          sum += h_Src[d * imageW + ty] * h_Filter[filterR - k];
+          sum += h_Src[d * imageW + tx] * h_Filter[filterR - k];
         }     
 
-        h_Dst[tx * imageW + ty] = sum;
+        h_Dst[ty * imageW + tx] = sum;
     }
 }
 
@@ -191,6 +191,25 @@ int main(int argc, char **argv) {
         error = ABS(h_OutputCPU[i] - h_OutputGPU[i]);
         if (error > accuracy) {
             printf("Test failed\n");
+
+            // Print arrays
+            printf("h_OutputCPU\n");
+            for (i =0; i < imageW; i++) {
+              for (int j = 0; j < imageH; j++) {
+                printf("%f ", h_OutputCPU[i * imageW + j]);
+              }
+              printf("\n");
+            }
+            printf("\n");
+
+            printf("h_OutputGPU\n");
+            for (i =0; i < imageW; i++) {
+              for (int j = 0; j < imageH; j++) {
+                printf("%f ", h_OutputGPU[i * imageW + j]);
+              }
+              printf("\n");
+            }
+            printf("\n");
             break;
         }
     }
