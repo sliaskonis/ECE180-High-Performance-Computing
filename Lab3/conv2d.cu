@@ -12,7 +12,7 @@ unsigned int filter_radius;
 
 #define FILTER_LENGTH 	(2 * filter_radius + 1)
 #define ABS(val)  	((val)<0.0 ? (-(val)) : (val))
-#define accuracy    0.00005 
+#define accuracy    1.175494e-38// 0.0000005 
 
 /***************************************
  *   Reference Row Convolution Filter  *
@@ -21,16 +21,18 @@ __global__ void convolutionRowGPU(float *h_Dst, float *h_Src, float *h_Filter,
                        int imageW, int imageH, int filterR) {
     int tx=threadIdx.x;
     int ty=threadIdx.y;
-        float sum=0;
-    for (int k = -filterR; k <= filterR; k++) {
-        int d = tx + k;
-        if (d >= 0 && d < imageW) {
-          sum += h_Src[ty * imageW + d] * h_Filter[filterR - k];
-        }     
+    float sum=0;
 
-        h_Dst[ty * imageW + tx] = sum;
+    if (tx < imageW && ty < imageH) {
+      for (int k = -filterR; k <= filterR; k++) {
+          int d = tx + k;
+          if (d >= 0 && d < imageW) {
+            sum += h_Src[ty * imageW + d] * h_Filter[filterR - k];
+          }     
+      }
+      h_Dst[ty * imageW + tx] = sum;  
     }
-}
+  }
 
 /******************************************
  *   Reference Column Convolution Filter  *
@@ -39,15 +41,17 @@ __global__ void convolutionColumnGPU(float *h_Dst, float *h_Src, float *h_Filter
     			   int imageW, int imageH, int filterR) {
     int tx=threadIdx.x;
     int ty=threadIdx.y;
-        float sum=0;
-    for (int k = -filterR; k <= filterR; k++) {
-        int d = ty + k;
-        if (d >= 0 && d < imageW) {
-          sum += h_Src[d * imageW + tx] * h_Filter[filterR - k];
-        }     
+    float sum=0;
 
-        h_Dst[ty * imageW + tx] = sum;
-    }
+    if (tx < imageW && ty < imageH) {
+      for (int k = -filterR; k <= filterR; k++) {
+          int d = ty + k;
+          if (d >= 0 && d < imageW) {
+            sum += h_Src[d * imageW + tx] * h_Filter[filterR - k];
+          }     
+      }
+      h_Dst[ty * imageW + tx] = sum;  
+  }
 }
 
 // Reference row convolution filter
@@ -71,7 +75,6 @@ __host__ void convolutionRowCPU(float *h_Dst, float *h_Src, float *h_Filter,
       }
     }
   }
-
 }
 
 // Reference column convolution filter
@@ -95,7 +98,6 @@ __host__ void convolutionColumnCPU(float *h_Dst, float *h_Src, float *h_Filter,
       }
     }
   }
-    
 }
 
 // Main program
@@ -129,6 +131,11 @@ int main(int argc, char **argv) {
     filter_radius = atoi(argv[2]);
     imageH = imageW;
 
+    if (imageW < FILTER_LENGTH) {
+        printf("Error: Filter length exceeds image dimensions\n");
+        exit(1);
+    }
+
     printf("Image Width x Height = %i x %i\n\n", imageW, imageH);
     printf("Allocating and initializing host arrays...\n");
 
@@ -145,7 +152,7 @@ int main(int argc, char **argv) {
     assert(h_OutputGPU != NULL);
 
     /************************ Device memory allocation ************************/
-    cudaMalloc((void**) &d_Filter, imageW*sizeof(float));
+    cudaMalloc((void**) &d_Filter, FILTER_LENGTH*sizeof(float));
     cudaMalloc((void**) &d_Input, imageW*imageH*sizeof(float));
     cudaMalloc((void**) &d_Buffer, imageW*imageH*sizeof(float));
     cudaMalloc((void**) &d_OutputGPU, imageW*imageH*sizeof(float));
@@ -163,7 +170,7 @@ int main(int argc, char **argv) {
     }
 
     /**********************  Copy Memory to Device ***************************/
-    cudaMemcpy(d_Filter, h_Filter, imageH * sizeof(float),cudaMemcpyHostToDevice);
+    cudaMemcpy(d_Filter, h_Filter, FILTER_LENGTH*sizeof(float),cudaMemcpyHostToDevice);
     cudaMemcpy(d_Input, h_Input, imageW*imageH*sizeof(float),cudaMemcpyHostToDevice);
     
     /********************************** CPU Execution **********************************/
@@ -175,43 +182,43 @@ int main(int argc, char **argv) {
     /********************************** GPU Execution **********************************/
     printf("GPU computation...\n");
 
-    cudaMemcpy(h_OutputGPU, d_OutputGPU, imageW*imageH*sizeof(float),cudaMemcpyDeviceToHost);
-
     /**********************  Kernel Launch Configuration ***************************/
     dim3 dimGrid(1, 1);
     dim3 dimBlock(imageW, imageH);
 
     convolutionRowGPU<<<dimGrid, dimBlock>>>(d_Buffer, d_Input, d_Filter, imageW, imageH, filter_radius);
+    cudaError_t err = cudaGetLastError();
+    if (err != cudaSuccess) {
+        printf("Error in convolutionRowGPU: %s\n", cudaGetErrorString(err));
+    }
+    cudaDeviceSynchronize();
+
     convolutionColumnGPU<<<dimGrid, dimBlock>>>(d_OutputGPU, d_Buffer, d_Filter, imageW, imageH, filter_radius);
-    
-    /********************** Verify Correctness **********************/
-    printf("Verifying results...\n");
-    float error = 0;
-    for (i = 0; i < imageW * imageH; i++) {
-        error = ABS(h_OutputCPU[i] - h_OutputGPU[i]);
-        if (error > accuracy) {
-            printf("Test failed\n");
+    err = cudaGetLastError();
+    if (err != cudaSuccess) {
+        printf("Error in convolutionColumnGPU: %s\n", cudaGetErrorString(err));
+    }
+    else {
+      // Copy results from device to host
+      cudaMemcpy(h_OutputGPU, d_OutputGPU, imageW*imageH*sizeof(float),cudaMemcpyDeviceToHost);
 
-            // Print arrays
-            printf("h_OutputCPU\n");
-            for (i =0; i < imageW; i++) {
-              for (int j = 0; j < imageH; j++) {
-                printf("%f ", h_OutputCPU[i * imageW + j]);
-              }
-              printf("\n");
-            }
-            printf("\n");
+      /********************** Verify Correctness **********************/
+      printf("Verifying results...\n");
 
-            printf("h_OutputGPU\n");
-            for (i =0; i < imageW; i++) {
-              for (int j = 0; j < imageH; j++) {
-                printf("%f ", h_OutputGPU[i * imageW + j]);
-              }
-              printf("\n");
-            }
-            printf("\n");
-            break;
-        }
+      int errors = 0;
+      for (i = 0; i < imageW * imageH; i++) {
+          float error = ABS(h_OutputCPU[i] - h_OutputGPU[i]);
+          if (error > accuracy) {
+              errors++;
+              printf("Mismatch at index %d: CPU = %f, GPU = %f, Error = %f\n", 
+                    i, h_OutputCPU[i], h_OutputGPU[i], error);
+          }
+      }
+      if (errors == 0) {
+          printf("TEST PASSED\n");
+      } else {
+          printf("TEST FAILED with %d errors\n", errors);
+      }
     }
 
     // Free Host allocated memory

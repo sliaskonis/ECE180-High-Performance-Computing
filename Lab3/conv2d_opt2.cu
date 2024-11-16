@@ -140,7 +140,9 @@ int main(int argc, char **argv) {
     printf("Image Width x Height = %i x %i\n\n", imageW, imageH);
     printf("Allocating and initializing host arrays...\n");
 
-    /************************ Host memory allocation ************************/
+    /**********************************************************/
+    /*                   Host Memory Allocation               */
+    /**********************************************************/
     h_Filter    = (float *)malloc(FILTER_LENGTH * sizeof(float));
     assert(h_Filter != NULL);
     h_Input     = (float *)malloc(imageW * imageH * sizeof(float));
@@ -152,7 +154,9 @@ int main(int argc, char **argv) {
     h_OutputGPU = (float *)malloc(imageW * imageH * sizeof(float));
     assert(h_OutputGPU != NULL);
 
-    /************************ Device memory allocation ************************/
+    /**********************************************************/
+    /*                   Device Memory Allocation             */
+    /**********************************************************/
     cudaMalloc((void**) &d_Filter, FILTER_LENGTH*sizeof(float));
     cudaMalloc((void**) &d_Input, imageW*imageH*sizeof(float));
     cudaMalloc((void**) &d_Buffer, imageW*imageH*sizeof(float));
