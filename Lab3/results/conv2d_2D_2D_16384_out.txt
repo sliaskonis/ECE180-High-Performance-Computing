@@ -1,0 +1,48 @@
+Iteration 1 with size 16384:
+CPU Execution Time: 36799.705000
+GPU Execution Time: 1730.820801
+
+Iteration 2 with size 16384:
+CPU Execution Time: 37466.617000
+GPU Execution Time: 1719.023926
+
+Iteration 3 with size 16384:
+CPU Execution Time: 36717.917000
+GPU Execution Time: 1737.391357
+
+Iteration 4 with size 16384:
+CPU Execution Time: 36792.810000
+GPU Execution Time: 1721.691650
+
+Iteration 5 with size 16384:
+CPU Execution Time: 36692.846000
+GPU Execution Time: 1681.080078
+
+Iteration 6 with size 16384:
+CPU Execution Time: 36748.476000
+GPU Execution Time: 1716.406982
+
+Iteration 7 with size 16384:
+CPU Execution Time: 36727.024000
+GPU Execution Time: 1582.450562
+
+Iteration 8 with size 16384:
+CPU Execution Time: 36917.999000
+GPU Execution Time: 1725.324829
+
+Iteration 9 with size 16384:
+CPU Execution Time: 36787.662000
+GPU Execution Time: 1706.088013
+
+Iteration 10 with size 16384:
+CPU Execution Time: 36709.628000
+GPU Execution Time: 1720.189453
+
+Iteration 11 with size 16384:
+CPU Execution Time: 36928.588000
+GPU Execution Time: 1715.545044
+
+Iteration 12 with size 16384:
+CPU Execution Time: 36961.122000
+GPU Execution Time: 1698.440918
+

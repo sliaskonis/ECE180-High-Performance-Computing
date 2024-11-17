@@ -1,0 +1,48 @@
+Iteration 1 with size 256:
+CPU Execution Time: 4.209000
+GPU Execution Time: 0.763584
+
+Iteration 2 with size 256:
+CPU Execution Time: 4.307000
+GPU Execution Time: 0.712672
+
+Iteration 3 with size 256:
+CPU Execution Time: 4.342000
+GPU Execution Time: 0.708384
+
+Iteration 4 with size 256:
+CPU Execution Time: 4.275000
+GPU Execution Time: 0.712992
+
+Iteration 5 with size 256:
+CPU Execution Time: 4.261000
+GPU Execution Time: 0.715936
+
+Iteration 6 with size 256:
+CPU Execution Time: 4.270000
+GPU Execution Time: 0.714080
+
+Iteration 7 with size 256:
+CPU Execution Time: 4.329000
+GPU Execution Time: 0.752832
+
+Iteration 8 with size 256:
+CPU Execution Time: 4.268000
+GPU Execution Time: 0.736320
+
+Iteration 9 with size 256:
+CPU Execution Time: 4.605000
+GPU Execution Time: 0.737632
+
+Iteration 10 with size 256:
+CPU Execution Time: 4.556000
+GPU Execution Time: 0.734208
+
+Iteration 11 with size 256:
+CPU Execution Time: 4.526000
+GPU Execution Time: 0.763008
+
+Iteration 12 with size 256:
+CPU Execution Time: 4.510000
+GPU Execution Time: 0.755584
+

@@ -1,0 +1,48 @@
+Iteration 1 with size 2048:
+CPU Execution Time: 284.924000
+GPU Execution Time: 33.477791
+
+Iteration 2 with size 2048:
+CPU Execution Time: 282.468000
+GPU Execution Time: 33.593857
+
+Iteration 3 with size 2048:
+CPU Execution Time: 285.975000
+GPU Execution Time: 33.664448
+
+Iteration 4 with size 2048:
+CPU Execution Time: 284.749000
+GPU Execution Time: 33.510784
+
+Iteration 5 with size 2048:
+CPU Execution Time: 284.441000
+GPU Execution Time: 33.561985
+
+Iteration 6 with size 2048:
+CPU Execution Time: 285.097000
+GPU Execution Time: 33.481663
+
+Iteration 7 with size 2048:
+CPU Execution Time: 285.063000
+GPU Execution Time: 33.551327
+
+Iteration 8 with size 2048:
+CPU Execution Time: 282.406000
+GPU Execution Time: 33.368607
+
+Iteration 9 with size 2048:
+CPU Execution Time: 284.126000
+GPU Execution Time: 33.615456
+
+Iteration 10 with size 2048:
+CPU Execution Time: 285.130000
+GPU Execution Time: 33.733410
+
+Iteration 11 with size 2048:
+CPU Execution Time: 283.068000
+GPU Execution Time: 33.459488
+
+Iteration 12 with size 2048:
+CPU Execution Time: 283.743000
+GPU Execution Time: 33.474174
+

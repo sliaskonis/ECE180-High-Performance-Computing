@@ -1,0 +1,48 @@
+Iteration 1 with size 4096:
+CPU Execution Time: 2305.596000
+GPU Execution Time: 126.183235
+
+Iteration 2 with size 4096:
+CPU Execution Time: 2302.817000
+GPU Execution Time: 126.101120
+
+Iteration 3 with size 4096:
+CPU Execution Time: 2277.650000
+GPU Execution Time: 126.173439
+
+Iteration 4 with size 4096:
+CPU Execution Time: 2305.306000
+GPU Execution Time: 126.098305
+
+Iteration 5 with size 4096:
+CPU Execution Time: 2310.561000
+GPU Execution Time: 126.191902
+
+Iteration 6 with size 4096:
+CPU Execution Time: 2311.239000
+GPU Execution Time: 126.159615
+
+Iteration 7 with size 4096:
+CPU Execution Time: 2304.427000
+GPU Execution Time: 124.359680
+
+Iteration 8 with size 4096:
+CPU Execution Time: 2312.276000
+GPU Execution Time: 124.415550
+
+Iteration 9 with size 4096:
+CPU Execution Time: 2304.691000
+GPU Execution Time: 124.267906
+
+Iteration 10 with size 4096:
+CPU Execution Time: 2287.677000
+GPU Execution Time: 119.311745
+
+Iteration 11 with size 4096:
+CPU Execution Time: 2303.763000
+GPU Execution Time: 119.321922
+
+Iteration 12 with size 4096:
+CPU Execution Time: 2312.536000
+GPU Execution Time: 119.390846
+

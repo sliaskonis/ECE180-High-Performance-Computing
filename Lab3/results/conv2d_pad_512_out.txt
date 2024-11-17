@@ -1,0 +1,48 @@
+Iteration 1 with size 512:
+CPU Execution Time: 17.226000
+GPU Execution Time: 2.525504
+
+Iteration 2 with size 512:
+CPU Execution Time: 17.228000
+GPU Execution Time: 2.529408
+
+Iteration 3 with size 512:
+CPU Execution Time: 17.443000
+GPU Execution Time: 2.526592
+
+Iteration 4 with size 512:
+CPU Execution Time: 17.372000
+GPU Execution Time: 2.545536
+
+Iteration 5 with size 512:
+CPU Execution Time: 17.663000
+GPU Execution Time: 2.460192
+
+Iteration 6 with size 512:
+CPU Execution Time: 17.333000
+GPU Execution Time: 2.593184
+
+Iteration 7 with size 512:
+CPU Execution Time: 17.689000
+GPU Execution Time: 2.554944
+
+Iteration 8 with size 512:
+CPU Execution Time: 17.404000
+GPU Execution Time: 2.550048
+
+Iteration 9 with size 512:
+CPU Execution Time: 17.347000
+GPU Execution Time: 2.610848
+
+Iteration 10 with size 512:
+CPU Execution Time: 17.423000
+GPU Execution Time: 2.525504
+
+Iteration 11 with size 512:
+CPU Execution Time: 17.535000
+GPU Execution Time: 2.513792
+
+Iteration 12 with size 512:
+CPU Execution Time: 17.246000
+GPU Execution Time: 2.556224
+
