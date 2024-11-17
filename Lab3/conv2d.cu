@@ -12,7 +12,7 @@ unsigned int filter_radius;
 
 #define FILTER_LENGTH 	(2 * filter_radius + 1)
 #define ABS(val)  	((val)<0.0 ? (-(val)) : (val))
-#define accuracy    1.175494e-38// 0.0000005 
+#define accuracy    0.5 
 
 /***************************************
  *   Reference Row Convolution Filter  *
