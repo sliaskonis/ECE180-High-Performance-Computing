@@ -22,41 +22,41 @@ unsigned int filter_radius;
 /***************************************
  *   Reference Row Convolution Filter  *
  ***************************************/
-__global__ void convolutionRowGPU(float *h_Dst, float *h_Src, float *h_Filter, 
+__global__ void convolutionRowGPU(float *d_Dst, float *d_Src, float *d_Filter, 
                        int imageW, int imageH, int filterR) {
     int tx=threadIdx.x;
     int ty=threadIdx.y;
     float sum=0;
 
     if (tx < imageW && ty < imageH) {
-      for (int k = -filterR; k <= filterR; k++) {
-          int d = tx + k;
-          if (d >= 0 && d < imageW) {
-            sum += h_Src[ty * imageW + d] * h_Filter[filterR - k];
-          }     
-      }
-      h_Dst[ty * imageW + tx] = sum;  
+        for (int k = -filterR; k <= filterR; k++) {
+            int d = tx + k;
+            if (d >= 0 && d < imageW) {
+                sum += d_Src[ty * imageW + d] * d_Filter[filterR - k];
+            }     
+        }
+        d_Dst[ty * imageW + tx] = sum;  
     }
-  }
+}
 
 /******************************************
  *   Reference Column Convolution Filter  *
  ******************************************/
-__global__ void convolutionColumnGPU(float *h_Dst, float *h_Src, float *h_Filter,
+__global__ void convolutionColumnGPU(float *d_Dst, float *d_Src, float *d_Filter,
     			   int imageW, int imageH, int filterR) {
     int tx=threadIdx.x;
     int ty=threadIdx.y;
     float sum=0;
 
     if (tx < imageW && ty < imageH) {
-      for (int k = -filterR; k <= filterR; k++) {
-          int d = ty + k;
-          if (d >= 0 && d < imageW) {
-            sum += h_Src[d * imageW + tx] * h_Filter[filterR - k];
-          }     
-      }
-      h_Dst[ty * imageW + tx] = sum;  
-  }
+        for (int k = -filterR; k <= filterR; k++) {
+            int d = ty + k;
+            if (d >= 0 && d < imageW) {
+                sum += d_Src[d * imageW + tx] * d_Filter[filterR - k];
+            }     
+        }
+        d_Dst[ty * imageW + tx] = sum;  
+    }
 }
 
 // Reference row convolution filter
@@ -65,21 +65,21 @@ __host__ void convolutionRowCPU(float *h_Dst, float *h_Src, float *h_Filter,
 
   int x, y, k;
                       
-  for (y = 0; y < imageH; y++) {
-    for (x = 0; x < imageW; x++) {
-      float sum = 0;
+    for (y = 0; y < imageH; y++) {
+        for (x = 0; x < imageW; x++) {
+            float sum = 0;
 
-      for (k = -filterR; k <= filterR; k++) {
-        int d = x + k;
+            for (k = -filterR; k <= filterR; k++) {
+                int d = x + k;
 
-        if (d >= 0 && d < imageW) {
-          sum += h_Src[y * imageW + d] * h_Filter[filterR - k];
-        }     
+                if (d >= 0 && d < imageW) {
+                    sum += h_Src[y * imageW + d] * h_Filter[filterR - k];
+                }     
 
-        h_Dst[y * imageW + x] = sum;
-      }
+                h_Dst[y * imageW + x] = sum;
+            }
+        }
     }
-  }
 }
 
 // Reference column convolution filter
@@ -88,21 +88,21 @@ __host__ void convolutionColumnCPU(float *h_Dst, float *h_Src, float *h_Filter,
 
   int x, y, k;
   
-  for (y = 0; y < imageH; y++) {
-    for (x = 0; x < imageW; x++) {
-      float sum = 0;
+    for (y = 0; y < imageH; y++) {
+        for (x = 0; x < imageW; x++) {
+            float sum = 0;
 
-      for (k = -filterR; k <= filterR; k++) {
-        int d = y + k; // height + radius  ie:  h + (-2,-1,0,1,2)
+            for (k = -filterR; k <= filterR; k++) {
+                int d = y + k; // height + radius  ie:  h + (-2,-1,0,1,2)
 
-        if (d >= 0 && d < imageH) {
-          sum += h_Src[d * imageW + x] * h_Filter[filterR - k];
-        }   
+                if (d >= 0 && d < imageH) {
+                sum += h_Src[d * imageW + x] * h_Filter[filterR - k];
+                }   
  
-        h_Dst[y * imageW + x] = sum;
-      }
+                h_Dst[y * imageW + x] = sum;
+            }
+        }
     }
-  }
 }
 
 // Main program
@@ -204,26 +204,26 @@ int main(int argc, char **argv) {
         printf("Error in convolutionColumnGPU: %s\n", cudaGetErrorString(err));
     }
     else {
-      // Copy results from device to host
-      cudaMemcpy(h_OutputGPU, d_OutputGPU, imageW*imageH*sizeof(float),cudaMemcpyDeviceToHost);
+        // Copy results from device to host
+        cudaMemcpy(h_OutputGPU, d_OutputGPU, imageW*imageH*sizeof(float),cudaMemcpyDeviceToHost);
 
-      /********************** Verify Correctness **********************/
-      printf("Verifying results...\n");
+        /********************** Verify Correctness **********************/
+        printf("Verifying results...\n");
 
-      int errors = 0;
-      for (i = 0; i < imageW * imageH; i++) {
-          float error = ABS(h_OutputCPU[i] - h_OutputGPU[i]);
-          if (error > accuracy) {
-              errors++;
-              printf("Mismatch at index %d: CPU = %f, GPU = %f, Error = %f\n", 
-                    i, h_OutputCPU[i], h_OutputGPU[i], error);
-          }
-      }
-      if (errors == 0) {
-          printf("TEST PASSED\n");
-      } else {
-          printf("TEST FAILED with %d errors\n", errors);
-      }
+        int errors = 0;
+        for (i = 0; i < imageW * imageH; i++) {
+            float error = ABS(h_OutputCPU[i] - h_OutputGPU[i]);
+            if (error > accuracy) {
+                errors++;
+                printf("Mismatch at index %d: CPU = %f, GPU = %f, Error = %f\n", 
+                        i, h_OutputCPU[i], h_OutputGPU[i], error);
+            }
+        }
+        if (errors == 0) {
+            printf("TEST PASSED\n");
+        } else {
+            printf("TEST FAILED with %d errors\n", errors);
+        }
     }
 
     // Free Host allocated memory

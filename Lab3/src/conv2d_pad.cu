@@ -45,7 +45,7 @@ bool checkCudaError(const char *step) {
 /***************************************
  *           GPU Row Convolution       *
  ***************************************/
-__global__ void convolutionRowGPU(float *h_Dst, float *h_Src, float *h_Filter, 
+__global__ void convolutionRowGPU(float *d_Dst, float *d_Src, float *d_Filter, 
                        int imageW, int imageH, int filterR) {
     int tx = (blockIdx.x * blockDim.x) + threadIdx.x;
     int ty = (blockIdx.y * blockDim.y) + threadIdx.y;
@@ -56,16 +56,16 @@ __global__ void convolutionRowGPU(float *h_Dst, float *h_Src, float *h_Filter,
 
     for (int k = -filterR; k <= filterR; k++) {
         int d = xnew + k;
-        sum += h_Src[ynew * imageW + d] * h_Filter[filterR - k];
+        sum += d_Src[ynew * imageW + d] * d_Filter[filterR - k];
     }
 
-    h_Dst[ynew * imageW + xnew] = sum;
+    d_Dst[ynew * imageW + xnew] = sum;
 }
 
 /***************************************
  *           GPU Column Convolution    *
  ***************************************/
-__global__ void convolutionColumnGPU(float *h_Dst, float *h_Src, float *h_Filter,
+__global__ void convolutionColumnGPU(float *d_Dst, float *d_Src, float *d_Filter,
     			   int imageW, int imageH, int filterR) {
     int tx = (blockIdx.x * blockDim.x) + threadIdx.x;
     int ty = (blockIdx.y * blockDim.y) + threadIdx.y;
@@ -76,10 +76,10 @@ __global__ void convolutionColumnGPU(float *h_Dst, float *h_Src, float *h_Filter
 
     for (int k = -filterR; k <= filterR; k++) {
         int d = ynew + k;
-        sum += h_Src[d * imageW + xnew] * h_Filter[filterR - k];
+        sum += d_Src[d * imageW + xnew] * d_Filter[filterR - k];
     }
 
-    h_Dst[ynew * imageW + xnew] = sum;
+    d_Dst[ynew * imageW + xnew] = sum;
 }
 
 /***************************************
@@ -88,19 +88,19 @@ __global__ void convolutionColumnGPU(float *h_Dst, float *h_Src, float *h_Filter
 __host__ void convolutionRowCPU(float *h_Dst, float *h_Src, float *h_Filter, 
                        int imageW, int imageH, int filterR) {
 
-  int x, y, k;
+    int x, y, k;
                       
-  for (y = filterR; y < imageH - filterR; y++) {
-    for (x = filterR; x < imageW - filterR; x++) {
-      float sum = 0;
+    for (y = filterR; y < imageH - filterR; y++) {
+        for (x = filterR; x < imageW - filterR; x++) {
+            float sum = 0;
 
-      for (k = -filterR; k <= filterR; k++) {
-        int d = x + k;
-        sum += h_Src[y * imageW + d] * h_Filter[filterR - k];   
-        h_Dst[y * imageW + x] = sum;
-      }
+            for (k = -filterR; k <= filterR; k++) {
+                int d = x + k;
+                sum += h_Src[y * imageW + d] * h_Filter[filterR - k];   
+                h_Dst[y * imageW + x] = sum;
+            }
+        }
     }
-  }
 }
 
 /***************************************
@@ -111,17 +111,17 @@ __host__ void convolutionColumnCPU(float *h_Dst, float *h_Src, float *h_Filter,
 
   int x, y, k;
   
-  for (y = filterR; y < imageH - filterR; y++) {
-    for (x = filterR; x < imageW - filterR; x++) {
-      float sum = 0;
+    for (y = filterR; y < imageH - filterR; y++) {
+        for (x = filterR; x < imageW - filterR; x++) {
+            float sum = 0;
 
-      for (k = -filterR; k <= filterR; k++) {
-        int d = y + k;
-        sum += h_Src[d * imageW + x] * h_Filter[filterR - k];
-        h_Dst[y * imageW + x] = sum;
-      }
+            for (k = -filterR; k <= filterR; k++) {
+                int d = y + k;
+                sum += h_Src[d * imageW + x] * h_Filter[filterR - k];
+                h_Dst[y * imageW + x] = sum;
+            }
+        }
     }
-  }
 }
 
 /*
