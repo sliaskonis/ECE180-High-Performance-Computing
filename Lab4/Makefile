@@ -2,7 +2,7 @@
 CC = gcc
 NVCC = nvcc
 CFLAGS = -Wall -g
-NVCCFLAGS = -arch=sm_50 -O2
+NVCCFLAGS = -O4
 
 # Directories
 SRC_DIR = src
