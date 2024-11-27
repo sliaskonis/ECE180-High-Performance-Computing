@@ -20,7 +20,7 @@ C_OBJS = $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%.o, $(C_SRCS))
 CU_OBJS = $(patsubst $(SRC_DIR)/%.cu, $(BUILD_DIR)/%.o, $(CU_SRCS))
 
 # All object files
-OBJS = $(C_OBJS) $(CU_OBJS)
+OBJS = $(sort $(C_OBJS) $(CU_OBJS))
 
 # Output executable
 TARGET = main
@@ -37,11 +37,11 @@ $(TARGET): $(OBJS)
 	$(NVCC) $(NVCCFLAGS) -o $@ $(OBJS)
 
 # Compile C source files into object files
-$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c $(HDRS)
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # Compile CUDA source files into object files
-$(BUILD_DIR)/%.o: $(SRC_DIR)/%.cu $(HDRS)
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.cu
 	$(NVCC) $(NVCCFLAGS) -c $< -o $@
 
 # Clean up build artifacts
