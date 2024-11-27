@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "hist-equ.h"
 
 #define MAX_THREADS_PER_BLOCK 1024
 #define GRID_DIM ceil((float)img_size/MAX_THREADS_PER_BLOCK)
