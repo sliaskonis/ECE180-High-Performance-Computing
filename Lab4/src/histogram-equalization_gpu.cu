@@ -19,8 +19,9 @@ void histogram_equalization_gpu(unsigned char *img_out, unsigned char *img_in,
                             int *hist_in, int img_size, int nbr_bin) {
     int *lut = (int *)malloc(sizeof(int)*nbr_bin);
     int cdf, min, d;
-    int *d_lut, *d_hist_in;
+    int *d_lut;
     unsigned char *d_img_in, *d_img_out;
+    int i = 0;
 
     /* Construct the LUT by calculating the CDF */
     cdf = 0;
