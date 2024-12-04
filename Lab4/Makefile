@@ -1,6 +1,6 @@
 # Variables
 CUDAFLAGS = -I./src
-CFLAGS = -O4
+CFLAGS = -O4 -g
 LDFLAGS = -lm
 
 # Source files
@@ -16,6 +16,6 @@ $(OUTPUT): $(SRC)
 	nvcc $(CUDAFLAGS) -Xcompiler="$(CFLAGS)" -Xlinker="$(LDFLAGS)" -o $@ $^
 
 clean:
-	rm -f $(OUTPUT)
+	rm main *.pgm
 
 .PHONY: all clean
