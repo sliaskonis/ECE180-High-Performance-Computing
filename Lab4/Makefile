@@ -3,6 +3,7 @@ CC = gcc
 NVCC = nvcc
 CFLAGS = -Wall -I./src
 CUDA_FLAGS = -I./src
+LDFLAGS = -lcudart -lm -lstdc++
 
 # Source files
 SRC_DIR = src
@@ -11,7 +12,7 @@ CUDA_SRCS = $(SRC_DIR)/histogram-equalization_gpu.cu
 HEADERS = $(SRC_DIR)/hist-equ.h
 
 # Object files
-OBJS = $(C_SRCS:.c=.o)
+C_OBJS = $(C_SRCS:.c=.o)
 CUDA_OBJS = $(CUDA_SRCS:.cu=.o)
 
 # Output executable
@@ -20,8 +21,8 @@ OUTPUT = main
 # Rules
 all: $(OUTPUT)
 
-$(OUTPUT): $(OBJS) $(CUDA_OBJS)
-	$(CC) $(CFLAGS) -o $@ $^
+$(OUTPUT): $(C_OBJS) $(CUDA_OBJS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 %.o: %.c $(HEADERS)
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -30,6 +31,6 @@ $(OUTPUT): $(OBJS) $(CUDA_OBJS)
 	$(NVCC) $(CUDA_FLAGS) -c $< -o $@
 
 clean:
-	rm -f $(OBJS) $(CUDA_OBJS) $(OUTPUT)
+	rm -f $(C_OBJS) $(CUDA_OBJS) $(OUTPUT)
 
 .PHONY: all clean
