@@ -1,52 +1,35 @@
-# Compiler and flags
+# Variables
 CC = gcc
 NVCC = nvcc
-CFLAGS = -Wall -g
-NVCCFLAGS = -O4
-
-# Directories
-SRC_DIR = src
-BUILD_DIR = build
+CFLAGS = -Wall -I./src
+CUDA_FLAGS = -I./src
 
 # Source files
-C_SRCS = $(wildcard $(SRC_DIR)/*.c)
-CU_SRCS = $(wildcard $(SRC_DIR)/*.cu)
+SRC_DIR = src
+C_SRCS = $(SRC_DIR)/contrast-enhancement.c $(SRC_DIR)/histogram-equalization.c $(SRC_DIR)/main.c
+CUDA_SRCS = $(SRC_DIR)/histogram-equalization_gpu.cu
+HEADERS = $(SRC_DIR)/hist-equ.h
 
-# Header files
-HDRS = $(wildcard $(SRC_DIR)/*.h)
-
-# Object files (place them in the build directory)
-C_OBJS = $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%.o, $(C_SRCS))
-CU_OBJS = $(patsubst $(SRC_DIR)/%.cu, $(BUILD_DIR)/%.o, $(CU_SRCS))
-
-# All object files
-OBJS = $(sort $(C_OBJS) $(CU_OBJS))
+# Object files
+OBJS = $(C_SRCS:.c=.o)
+CUDA_OBJS = $(CUDA_SRCS:.cu=.o)
 
 # Output executable
-TARGET = main
+OUTPUT = main
 
-# Default target
-all: $(BUILD_DIR) $(TARGET)
+# Rules
+all: $(OUTPUT)
 
-# Create the build directory if it doesn't exist
-$(BUILD_DIR):
-	mkdir -p $(BUILD_DIR)
+$(OUTPUT): $(OBJS) $(CUDA_OBJS)
+	$(CC) $(CFLAGS) -o $@ $^
 
-# Build the target executable
-$(TARGET): $(OBJS)
-	$(NVCC) $(NVCCFLAGS) -o $@ $(OBJS)
-
-# Compile C source files into object files
-$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
+%.o: %.c $(HEADERS)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# Compile CUDA source files into object files
-$(BUILD_DIR)/%.o: $(SRC_DIR)/%.cu
-	$(NVCC) $(NVCCFLAGS) -c $< -o $@
+%.o: %.cu $(HEADERS)
+	$(NVCC) $(CUDA_FLAGS) -c $< -o $@
 
-# Clean up build artifacts
 clean:
-	rm -rf $(BUILD_DIR) $(TARGET)
+	rm -f $(OBJS) $(CUDA_OBJS) $(OUTPUT)
 
-# Phony targets to prevent conflicts with files
 .PHONY: all clean
