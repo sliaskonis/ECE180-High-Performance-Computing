@@ -1,19 +1,10 @@
 # Variables
-CC = gcc
-NVCC = nvcc
-CFLAGS = -Wall -I./src
-CUDA_FLAGS = -I./src
-LDFLAGS = -lcudart -lm -lstdc++
+CUDAFLAGS = -I./src
+CFLAGS = -O4
+LDFLAGS = -lm
 
 # Source files
-SRC_DIR = src
-C_SRCS = $(SRC_DIR)/contrast-enhancement.c $(SRC_DIR)/histogram-equalization.c $(SRC_DIR)/main.c
-CUDA_SRCS = $(SRC_DIR)/histogram-equalization_gpu.cu
-HEADERS = $(SRC_DIR)/hist-equ.h
-
-# Object files
-C_OBJS = $(C_SRCS:.c=.o)
-CUDA_OBJS = $(CUDA_SRCS:.cu=.o)
+SRC = src/histogram-equalization_gpu.cu src/contrast-enhancement.c src/histogram-equalization.c src/main.c
 
 # Output executable
 OUTPUT = main
@@ -21,16 +12,10 @@ OUTPUT = main
 # Rules
 all: $(OUTPUT)
 
-$(OUTPUT): $(C_OBJS) $(CUDA_OBJS)
-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
-
-%.o: %.c $(HEADERS)
-	$(CC) $(CFLAGS) -c $< -o $@
-
-%.o: %.cu $(HEADERS)
-	$(NVCC) $(CUDA_FLAGS) -c $< -o $@
+$(OUTPUT): $(SRC)
+	nvcc $(CUDAFLAGS) -Xcompiler="$(CFLAGS)" -Xlinker="$(LDFLAGS)" -o $@ $^
 
 clean:
-	rm -f $(C_OBJS) $(CUDA_OBJS) $(OUTPUT)
+	rm -f $(OUTPUT)
 
 .PHONY: all clean
