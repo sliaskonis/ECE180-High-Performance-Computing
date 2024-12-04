@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <cuda_runtime.h>
 #include "hist-equ.h"
 
 #define MAX_THREADS_PER_BLOCK 1024
