@@ -18,50 +18,22 @@ extern "C" {
 	}
 
 	/****************************** Kernels ******************************/
-	// __global__ void histogram_gpu(int *hist_out, unsigned char *img_in, int img_size, int nbr_bin) {
-    //     __shared__ int private_hist[256];
+	__global__ void histogram_gpu(int *hist_out, unsigned char *img_in, int nbr_bin) {
+        __shared__ int private_hist[256];
 
-    //     int tid = threadIdx.x + blockIdx.x*blockDim.x;
+        int tid = threadIdx.x + blockIdx.x*blockDim.x;
 
-    //     if (threadIdx.x < 256) {
-    //         private_hist[threadIdx.x] = 0;
-    //     }
-    //     __syncthreads();
+        if (threadIdx.x < nbr_bin) {
+            private_hist[threadIdx.x] = 0;
+        }
+        __syncthreads();
 		
-    //     atomicAdd(&(private_hist[img_in[tid]]), 1);
-    //     __syncthreads();
+        atomicAdd(&(private_hist[img_in[tid]]), 1);
+        __syncthreads();
         
-    //     if (threadIdx.x < 256) {
-    //         atomicAdd(&(hist_out[threadIdx.x]), private_hist[threadIdx.x]);
-    //     }
-    // }
-	// __global__ void histogram_gpu(int *hist_out, unsigned char *img_in, int img_size, int nbr_bin) {
-    //     __shared__ unsigned int private_hist[256];
-
-    //     int i = threadIdx.x + blockIdx.x*blockDim.x,
-    //         stride = blockDim.x*gridDim.x;
-
-    //     if (threadIdx.x < 256) {
-    //         private_hist[threadIdx.x] = 0;
-    //     }
-    //     __syncthreads();
-
-    //     while (i < img_size) {
-    //         atomicAdd( &(private_hist[img_in[i]]), 1);
-    //         i += stride;
-    //     }
-    //     __syncthreads();
-        
-    //     if (threadIdx.x < 256) {
-    //         atomicAdd(&(hist_out[threadIdx.x]), private_hist[threadIdx.x]);
-    //     }
-    // }
-
-    __global__ void histogram_gpu(int *hist_out, unsigned char *img_in, int img_size, int nbr_bin) {
-        int i = threadIdx.x + blockIdx.x*blockDim.x,
-            stride = blockDim.x*gridDim.x;
-
-		atomicAdd(&(hist_out[img_in[i]]), 1);
+        if (threadIdx.x < nbr_bin) {
+            atomicAdd(&(hist_out[threadIdx.x]), private_hist[threadIdx.x]);
+        }
     }
 
     __global__ void get_equalized_image(unsigned char *d_img_out, unsigned char *d_img_in, int *d_lut, int d_img_size) {
@@ -80,6 +52,7 @@ extern "C" {
         int cdf, min, d, i = 0;
 		int *hist_in;
         int *lut;
+        int padding = 0, padded_size = 0;
 		
 		unsigned char *d_img_in, *d_img_out;
         int *d_hist_out, *d_lut;
@@ -89,12 +62,14 @@ extern "C" {
         hist_in = (int *)malloc(sizeof(int)*nbr_bin);
 
         // Allocate device memory 
-		int padded_size = img_size + (MAX_THREADS_PER_BLOCK - (img_size%MAX_THREADS_PER_BLOCK));		// THIS IS WRONG!!!!!!!!!!!!!!!! (what if we dont need padding (% operation is 0))
+        padding = (img_size%MAX_THREADS_PER_BLOCK) ? (MAX_THREADS_PER_BLOCK - (img_size%MAX_THREADS_PER_BLOCK)) : 0;
+
+		padded_size = img_size + padding;
 		cudaMalloc((void**) &d_img_in,	 sizeof(unsigned char)*padded_size);
         cudaMalloc((void**) &d_hist_out, sizeof(int)*nbr_bin);
 
-        cudaMemset (d_img_in,   0, padded_size);
-        cudaMemset (d_hist_out, 0, nbr_bin);
+        cudaMemset (d_img_in,   0, sizeof(unsigned char)*padded_size);
+        cudaMemset (d_hist_out, 0, sizeof(int)*nbr_bin);
         
 		cudaMemcpy(d_img_in, img_in, sizeof(unsigned char)*img_size, cudaMemcpyHostToDevice);
 
@@ -102,20 +77,20 @@ extern "C" {
         dim3 block(MAX_THREADS_PER_BLOCK, 1, 1);
         dim3 grid(GRID_DIM, 1, 1);
 
-        histogram_gpu<<<grid, block>>>(d_hist_out, d_img_in, padded_size, nbr_bin);
+        histogram_gpu<<<grid, block>>>(d_hist_out, d_img_in, nbr_bin);
         
 		cudaDeviceSynchronize();
 		checkCudaError("Histogram calculation");
 
 		// Copy calculated histogram back to host 
         cudaMemcpy(hist_in, d_hist_out, sizeof(int)*nbr_bin, cudaMemcpyDeviceToHost);
-        
+
 		// Free non-wanted memory 
 		cudaFree(d_hist_out);
 
 		// Clean histogram counts added by the padding elements
 		// Padding elements are set to 0
-        hist_in[0] = hist_in[0] - ((MAX_THREADS_PER_BLOCK - (img_size%MAX_THREADS_PER_BLOCK)));			// THIS IS WRONG!!!!!!!!!!!!!
+        hist_in[0] = hist_in[0] - padding;
 		/* Construct the LUT by calculating the CDF */
         cdf = 0;
         min = 0;
