@@ -14,7 +14,7 @@ void free_pgm(PGM_IMG img);
 void histogram(int * hist_out, unsigned char * img_in, int img_size, int nbr_bin);
 void histogram_equalization_cpu(unsigned char * img_out, unsigned char * img_in,
                             int * hist_in, int img_size, int nbr_bin);
-void histogram_equalization_gpu(unsigned char *img_out, unsigned char *img_in,
+void histogram_gpu(int *hist_out, unsigned char *img_in,
                             int img_size, int nbr_bin);
 
 //Contrast enhancement for gray-scale images
