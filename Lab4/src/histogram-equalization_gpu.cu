@@ -3,6 +3,7 @@ extern "C" {
     #include <cuda_runtime.h>
     #include <time.h>
     #include "hist-equ.h"
+    #include "colours.h"
 
     #define MAX_THREADS_PER_BLOCK 1024
     #define GRID_DIM ceil(((float)img_size/MAX_THREADS_PER_BLOCK))
@@ -74,12 +75,14 @@ extern "C" {
         int *d_hist_out;
         int *d_lut;
 
-        cudaEvent_t gpu_start, gpu_stop, memory_transfers, hist_kernel, hist_equ_kernel;
+        cudaEvent_t gpu_start, gpu_stop, memory_transfers, hist_kernel, hist_equ_kernel_start, hist_equ_kernel_end;
         cudaEventCreate(&gpu_start);
         cudaEventCreate(&gpu_stop);
         cudaEventCreate(&memory_transfers);
         cudaEventCreate(&hist_kernel);
-        cudaEventCreate(&hist_equ_kernel);
+        cudaEventCreate(&hist_equ_kernel_start);
+        cudaEventCreate(&hist_equ_kernel_end);
+
 
         dim3 block(MAX_THREADS_PER_BLOCK, 1, 1);
         dim3 grid(GRID_DIM, 1, 1);
@@ -133,13 +136,14 @@ extern "C" {
         
         cudaMemcpy(d_lut, lut, sizeof(int)*nbr_bin, cudaMemcpyHostToDevice);
         
+        cudaEventRecord(hist_equ_kernel_start, 0);
+
         /************************* Histogram equalization kernel launch *************************/
         histogram_equ<<<grid, block>>>(d_img_in, d_lut);
         
-        cudaEventRecord(hist_equ_kernel, 0);
-        cudaEventSynchronize(hist_equ_kernel);
+        cudaEventRecord(hist_equ_kernel_end, 0);
+        cudaEventSynchronize(hist_equ_kernel_end);
 
-        cudaDeviceSynchronize();
         checkCudaError("Histogram equalization");
 
         // Copy img back to host
@@ -155,19 +159,22 @@ extern "C" {
         
         // Calculate elapsed time for all events
         cudaEventElapsedTime(&elapsed_time, gpu_start, gpu_stop);
-        printf("Total GPU time: %f sec, consists of:\n", elapsed_time/1000);
+        printf( GRN "Total GPU time: %fsec, consists of:\n" RESET, elapsed_time/1000);
 
         cudaEventElapsedTime(&elapsed_time, gpu_start, memory_transfers);
-        printf("\t%f (memory transfers)\n", elapsed_time/1000);
+        printf(MAG"\t%f (memory transfers 1)\n" RESET, elapsed_time/1000);
 
         cudaEventElapsedTime(&elapsed_time, memory_transfers, hist_kernel);
-        printf("\t%f (histogram kernel)\n", elapsed_time/1000);
+        printf(MAG"\t%f (histogram kernel)\n" RESET, elapsed_time/1000);
 
-        cudaEventElapsedTime(&elapsed_time, hist_kernel, hist_equ_kernel);
-        printf("\t%f (histogram equalization kernel)\n", elapsed_time/1000);
+        cudaEventElapsedTime(&elapsed_time, hist_kernel, hist_equ_kernel_start);
+        printf(MAG"\t%f (cdf calculation + memory transfers 2)\n" RESET, elapsed_time/1000);
 
-        cudaEventElapsedTime(&elapsed_time, hist_equ_kernel, gpu_stop);
-        printf("\t%f (memory transfers + cleanup)\n", elapsed_time/1000);
+        cudaEventElapsedTime(&elapsed_time, hist_equ_kernel_start, hist_equ_kernel_end);
+        printf(MAG"\t%f (histogram equalization kernel)\n" RESET, elapsed_time/1000);
+
+        cudaEventElapsedTime(&elapsed_time, hist_equ_kernel_end, gpu_stop);
+        printf(MAG"\t%f (memory transfers + cleanup)\n" RESET, elapsed_time/1000);
 
         // Reset the device
         cudaDeviceReset();

@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include "hist-equ.h"
+#include "colours.h"
 
 void run_cpu_gray_test(PGM_IMG img_in, char *out_filename);
 void run_gpu_gray_test(PGM_IMG img_in, char *out_filename);
@@ -15,12 +16,12 @@ int main(int argc, char *argv[]){
 		exit(1);
 	}
 
-    printf("Running contrast enhancement for gray-scale images.\n");
+    printf(YEL"Running contrast enhancement for gray-scale images.\n" RESET);
     img_ibuf_g = read_pgm(argv[1]);
     run_cpu_gray_test(img_ibuf_g, argv[2]);
     free_pgm(img_ibuf_g);
 
-    printf("Running contrast enhancement for gray-scale images on gpu.\n");
+    printf(YEL"\nRunning contrast enhancement for gray-scale images on gpu.\n" RESET);
     img_ibuf_g = read_pgm(argv[1]);
     run_gpu_gray_test(img_ibuf_g, argv[3]);
     free_pgm(img_ibuf_g); 
@@ -31,15 +32,9 @@ int main(int argc, char *argv[]){
 void run_cpu_gray_test(PGM_IMG img_in, char *out_filename)
 {
     PGM_IMG img_obuf;
-    clock_t start, end;
 
-    printf("Starting CPU processing...\n");
-    start = clock();
+    printf(YEL"Starting CPU processing...\n"RESET);
     img_obuf = contrast_enhancement_cpu(img_in);
-    end = clock();
-
-    double time_taken = (double)(end - start) / CLOCKS_PER_SEC;
-    printf("CPU time: %f\n", time_taken);
     
     write_pgm(img_obuf, out_filename);
     free_pgm(img_obuf);
@@ -47,16 +42,8 @@ void run_cpu_gray_test(PGM_IMG img_in, char *out_filename)
 
 void run_gpu_gray_test(PGM_IMG img_in, char *out_filename)
 {
-    clock_t start, end;
-
-    printf("Starting GPU processing...\n");
-    start = clock();
-    histogram_gpu(img_in.img, img_in.w*img_in.h, 256);
-    end = clock();
-
-    double time_taken = (double)(end - start) / CLOCKS_PER_SEC;
-    printf("GPU time: %f\n", time_taken);
-    
+    printf(YEL"Starting GPU processing...\n"RESET);
+    histogram_gpu(img_in.img, img_in.w*img_in.h, 256);    
     write_pgm(img_in, out_filename);
 }
 
@@ -76,9 +63,7 @@ PGM_IMG read_pgm(const char * path){
     fscanf(in_file, "%d",&result.w);
     fscanf(in_file, "%d",&result.h);
     fscanf(in_file, "%d\n",&v_max);
-#ifndef DEBUG
     printf("Image size: %d x %d\n", result.w, result.h);
-#endif
     result.img = (unsigned char *)malloc(result.w * result.h * sizeof(unsigned char));
 
     fread(result.img,sizeof(unsigned char), result.w*result.h, in_file);
