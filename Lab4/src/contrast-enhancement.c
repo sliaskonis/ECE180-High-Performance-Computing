@@ -17,16 +17,3 @@ PGM_IMG contrast_enhancement_cpu(PGM_IMG img_in)
     histogram_equalization_cpu(result.img, img_in.img,hist,result.w*result.h, 256);
     return result;
 }
-
-PGM_IMG contrast_enhancement_gpu(PGM_IMG img_in)
-{
-    PGM_IMG result;
-
-    result.w = img_in.w;
-    result.h = img_in.h;
-    result.img = (unsigned char *)malloc(result.w * result.h * sizeof(unsigned char));
-
-    histogram_gpu(result.img, img_in.img, result.w*result.h, 256);
-
-    return result;
-}

@@ -9,8 +9,6 @@ void run_gpu_gray_test(PGM_IMG img_in, char *out_filename);
 
 int main(int argc, char *argv[]){
     PGM_IMG img_ibuf_g;
-    PGM_IMG img_ibuf_cpu;
-    PGM_IMG img_ibuf_gpu;
 
 	if (argc != 4) {
 		printf("Run with input file name and output file name as arguments\n");
@@ -25,33 +23,13 @@ int main(int argc, char *argv[]){
     printf("Running contrast enhancement for gray-scale images on gpu.\n");
     img_ibuf_g = read_pgm(argv[1]);
     run_gpu_gray_test(img_ibuf_g, argv[3]);
-    free_pgm(img_ibuf_g);
+    free_pgm(img_ibuf_g); 
 
-#ifdef DEBUG
-    img_ibuf_cpu = read_pgm(argv[2]);
-    img_ibuf_gpu = read_pgm(argv[3]);
-    
-    int errors = 0;
-    for (int i = 0; i < img_ibuf_g.h*img_ibuf_g.w; i++) {
-        if (img_ibuf_cpu.img[i] != img_ibuf_gpu.img[i]) {
-            if (errors < 100) {
-                printf("Error in [%d]: cpu[%d] = %d gpu[%d] = %d\n", i, i, img_ibuf_cpu.img[i], i, img_ibuf_gpu.img[i]);
-            }
-            errors++;
-        }
-    }
-
-    printf("Number of errors: %d\n", errors);
-#endif
-
-    free_pgm(img_ibuf_cpu);
-    free_pgm(img_ibuf_gpu);
     return 0;
 }
 
 void run_cpu_gray_test(PGM_IMG img_in, char *out_filename)
 {
-    unsigned int timer = 0;
     PGM_IMG img_obuf;
     clock_t start, end;
 
@@ -69,20 +47,17 @@ void run_cpu_gray_test(PGM_IMG img_in, char *out_filename)
 
 void run_gpu_gray_test(PGM_IMG img_in, char *out_filename)
 {
-    unsigned int timer = 0;
-    PGM_IMG img_obuf;
     clock_t start, end;
 
     printf("Starting GPU processing...\n");
     start = clock();
-    img_obuf = contrast_enhancement_gpu(img_in);
+    histogram_gpu(img_in.img, img_in.w*img_in.h, 256);
     end = clock();
 
     double time_taken = (double)(end - start) / CLOCKS_PER_SEC;
     printf("GPU time: %f\n", time_taken);
     
-    write_pgm(img_obuf, out_filename);
-    free_pgm(img_obuf);
+    write_pgm(img_in, out_filename);
 }
 
 PGM_IMG read_pgm(const char * path){

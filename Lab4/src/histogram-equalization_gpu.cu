@@ -50,47 +50,61 @@ extern "C" {
     }
 
     // Histogram equalization application: naive implementation
-    __global__ void histogram_equ(unsigned char *d_img_out, unsigned char *d_img_in, int *d_lut) {
+    __global__ void histogram_equ(unsigned char *d_img_in, int *d_lut) {
         int tid = threadIdx.x + blockIdx.x*blockDim.x;
         
         if (d_lut[d_img_in[tid]] > 255) {
-            d_img_out[tid] = 255;
+            d_img_in[tid] = 255;
         }
         else {
-            d_img_out[tid] = (unsigned char)d_lut[d_img_in[tid]];
+            d_img_in[tid] = (unsigned char)d_lut[d_img_in[tid]];
         }
     }
 
 	// Kernel wrapper
-    void histogram_gpu(unsigned char *img_out, unsigned char *img_in,
+    void histogram_gpu(unsigned char *img_in,
                                 int img_size, int nbr_bin) {
         int padding = 0, padded_size = 0;
+        float elapsed_time;
         int i, cdf, min, d;
         int *lut = (int *)malloc(sizeof(int)*nbr_bin);
         int *hist_out = (int *)malloc(sizeof(int)*nbr_bin);
 
-		unsigned char *d_img_in, *d_img_out;
+		unsigned char *d_img_in;
         int *d_hist_out;
         int *d_lut;
 
-        // Allocate device memory 
+        cudaEvent_t gpu_start, gpu_stop, memory_transfers, hist_kernel, hist_equ_kernel;
+        cudaEventCreate(&gpu_start);
+        cudaEventCreate(&gpu_stop);
+        cudaEventCreate(&memory_transfers);
+        cudaEventCreate(&hist_kernel);
+        cudaEventCreate(&hist_equ_kernel);
+
+        dim3 block(MAX_THREADS_PER_BLOCK, 1, 1);
+        dim3 grid(GRID_DIM, 1, 1);
+
+        cudaEventRecord(gpu_start, 0);
+        /************************* Device Memory Allocation *************************/
         padding = (img_size%MAX_THREADS_PER_BLOCK) ? (MAX_THREADS_PER_BLOCK - (img_size%MAX_THREADS_PER_BLOCK)) : 0;
 
 		padded_size = img_size + padding;
 		cudaMalloc((void**) &d_img_in,	 sizeof(unsigned char)*padded_size);
         cudaMalloc((void**) &d_hist_out, sizeof(int)*nbr_bin);
+        cudaMalloc((void**) &d_lut,      sizeof(int)*nbr_bin);
 
         cudaMemset (d_img_in,   0, sizeof(unsigned char)*padded_size);
         cudaMemset (d_hist_out, 0, sizeof(int)*nbr_bin);
         
 		cudaMemcpy(d_img_in, img_in, sizeof(unsigned char)*img_size, cudaMemcpyHostToDevice);
 
-        // Launch kernel
-        dim3 block(MAX_THREADS_PER_BLOCK, 1, 1);
-        dim3 grid(GRID_DIM, 1, 1);
+        cudaEventRecord(memory_transfers, 0);
 
+        /************************* Histogram calculation kernel launch *************************/
         histogram_calc<<<grid, block>>>(d_hist_out, d_img_in, nbr_bin);
-		cudaDeviceSynchronize();
+		
+        cudaEventRecord(hist_kernel, 0);
+        cudaEventSynchronize(hist_kernel);
 
 		checkCudaError("Histogram calculation");
 
@@ -117,25 +131,43 @@ extern "C" {
             }
         }    
         
-        // Device memory allocation for histogram equalization application kernel
-        cudaMalloc((void**) &d_lut,     sizeof(int)*nbr_bin);
-        cudaMalloc((void**) &d_img_out, sizeof(unsigned char)*padded_size);
-        
         cudaMemcpy(d_lut, lut, sizeof(int)*nbr_bin, cudaMemcpyHostToDevice);
         
-        cudaMemset(d_img_out, 0, sizeof(unsigned char)*padded_size);
+        /************************* Histogram equalization kernel launch *************************/
+        histogram_equ<<<grid, block>>>(d_img_in, d_lut);
+        
+        cudaEventRecord(hist_equ_kernel, 0);
+        cudaEventSynchronize(hist_equ_kernel);
 
-        // Launch kernel
-        histogram_equ<<<grid, block>>>(d_img_out, d_img_in, d_lut);
+        cudaDeviceSynchronize();
+        checkCudaError("Histogram equalization");
 
         // Copy img back to host
-        cudaMemcpy(img_out, d_img_out, sizeof(unsigned char)*img_size, cudaMemcpyDeviceToHost);
+        cudaMemcpy(img_in, d_img_in, sizeof(unsigned char)*img_size, cudaMemcpyDeviceToHost);
 
-        // Free non-wanted memory 
+        // Free non-wanted memory
         cudaFree(d_lut);
         cudaFree(d_img_in);
-        cudaFree(d_img_out);
         cudaFree(d_hist_out);
+
+        cudaEventRecord(gpu_stop, 0);
+        cudaEventSynchronize(gpu_stop);
+        
+        // Calculate elapsed time for all events
+        cudaEventElapsedTime(&elapsed_time, gpu_start, gpu_stop);
+        printf("Total GPU time: %f sec, consists of:\n", elapsed_time/1000);
+
+        cudaEventElapsedTime(&elapsed_time, gpu_start, memory_transfers);
+        printf("\t%f (memory transfers)\n", elapsed_time/1000);
+
+        cudaEventElapsedTime(&elapsed_time, memory_transfers, hist_kernel);
+        printf("\t%f (histogram kernel)\n", elapsed_time/1000);
+
+        cudaEventElapsedTime(&elapsed_time, hist_kernel, hist_equ_kernel);
+        printf("\t%f (histogram equalization kernel)\n", elapsed_time/1000);
+
+        cudaEventElapsedTime(&elapsed_time, hist_equ_kernel, gpu_stop);
+        printf("\t%f (memory transfers + cleanup)\n", elapsed_time/1000);
 
         // Reset the device
         cudaDeviceReset();
