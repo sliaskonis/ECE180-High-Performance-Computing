@@ -8,7 +8,9 @@ extern "C" {
     #define MAX_THREADS_PER_BLOCK 1024
     #define BLOCK_SIZE 256
     #define CFACTOR 10
-    #define GRID_DIM (ceil((float)img_size/BLOCK_SIZE)/CFACTOR)
+    #define STRIDE 200
+    #define GRID_DIM_1 (ceil((float)img_size/BLOCK_SIZE)/CFACTOR)
+    #define GRID_DIM_2 (ceil((float)img_size/MAX_THREADS_PER_BLOCK)/STRIDE)
 
 	/****************************** Helper Functions ******************************/
 	bool checkCudaError(const char *step) {
@@ -28,7 +30,10 @@ extern "C" {
         int it = 0, accum = 0, prev_pixel_val = -1;
 
         it = i*CFACTOR;
-        private_hist[threadIdx.x] = 0;
+
+        if (threadIdx.x < 256) {
+            private_hist[threadIdx.x] = 0;
+        }
         __syncthreads();
 
         while (it < min(img_size, (i+1)*CFACTOR)) {
@@ -49,17 +54,36 @@ extern "C" {
         if (accum > 0) {
             atomicAdd(&(private_hist[prev_pixel_val]), accum);
         }
-
         __syncthreads();
 
-        atomicAdd(&(hist_out[threadIdx.x]), private_hist[threadIdx.x]);
+        if (threadIdx.x < 256) {
+            atomicAdd(&(hist_out[threadIdx.x]), private_hist[threadIdx.x]);
+        }
     }
 
-    // Histogram equalization application: naive implementation
-    __global__ void histogram_equ(unsigned char *d_img_in, int *d_lut) {
-        int tid = threadIdx.x + blockIdx.x*blockDim.x;
-        
-        d_img_in[tid] = (unsigned char)d_lut[d_img_in[tid]];
+    // // Histogram equalization application: naive implementation
+    // __global__ void histogram_equ(unsigned char *d_img_in, int *d_lut, int img_size) {
+    //     int tid = threadIdx.x + blockIdx.x*blockDim.x;
+
+    //     d_img_in[tid] = (unsigned char)d_lut[d_img_in[tid]];
+    // }
+
+
+    // Histogram equalization application: privatization, interleaved partitioning of threads -> coalesced memory accesses
+    __global__ void histogram_equ(unsigned char *d_img_in, int *d_lut, int img_size) {
+        int tid = threadIdx.x + blockIdx.x*blockDim.x,
+            stride = blockDim.x * gridDim.x;
+        __shared__ int priv_lut[256];
+
+        if (threadIdx.x < 256) {
+            priv_lut[threadIdx.x] = d_lut[threadIdx.x];
+        }
+        __syncthreads();
+
+        while (tid < img_size) {
+            d_img_in[tid] = (unsigned char)priv_lut[d_img_in[tid]];
+            tid += stride;
+        }
     }
 
 	// Kernel wrapper
@@ -85,7 +109,7 @@ extern "C" {
 
 
         dim3 block(BLOCK_SIZE, 1, 1);
-        dim3 grid(GRID_DIM, 1, 1);
+        dim3 grid(GRID_DIM_1, 1, 1);
 
         cudaEventRecord(gpu_start, 0);
         /************************* Device Memory Allocation *************************/
@@ -132,17 +156,17 @@ extern "C" {
             if(lut[i] < 0){
                 lut[i] = 0;
             }
-        }    
-        
+        }
+
         cudaMemcpy(d_lut, lut, sizeof(int)*nbr_bin, cudaMemcpyHostToDevice);
         
         dim3 block2(MAX_THREADS_PER_BLOCK, 1, 1);
-        dim3 grid2(ceil((float)img_size/MAX_THREADS_PER_BLOCK), 1, 1);
+        dim3 grid2(GRID_DIM_2, 1, 1);
         
         cudaEventRecord(hist_equ_kernel_start, 0);
 
         /************************* Histogram equalization kernel launch *************************/
-        histogram_equ<<<grid2, block2>>>(d_img_in, d_lut);
+        histogram_equ<<<grid2, block2>>>(d_img_in, d_lut, img_size);
         
         cudaEventRecord(hist_equ_kernel_end, 0);
         cudaEventSynchronize(hist_equ_kernel_end);
