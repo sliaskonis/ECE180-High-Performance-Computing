@@ -45,12 +45,7 @@ extern "C" {
     __global__ void histogram_equ(unsigned char *d_img_in, int *d_lut) {
         int tid = threadIdx.x + blockIdx.x*blockDim.x;
         
-        if (d_lut[d_img_in[tid]] > 255) {
-            d_img_in[tid] = 255;
-        }
-        else {
-            d_img_in[tid] = (unsigned char)d_lut[d_img_in[tid]];
-        }
+        d_img_in[tid] = (unsigned char)d_lut[d_img_in[tid]];
     }
 
 	// Kernel wrapper
