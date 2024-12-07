@@ -7,8 +7,8 @@ extern "C" {
 
     #define MAX_THREADS_PER_BLOCK 1024
     #define BLOCK_SIZE 256
-    #define STRIDE 100
-    #define GRID_DIM (ceil((float)img_size/BLOCK_SIZE)/STRIDE)
+    #define CFACTOR 10
+    #define GRID_DIM (ceil((float)img_size/BLOCK_SIZE)/CFACTOR)
 
 	/****************************** Helper Functions ******************************/
 	bool checkCudaError(const char *step) {
@@ -21,23 +21,37 @@ extern "C" {
 	}
 
 	/****************************** Kernels ******************************/
-
-    // Histogram calculation: stride implementation
-	__global__ void histogram_calc(int *hist_out, unsigned char *img_in, int img_size, int nbr_bin) {
+    __global__ void histogram_calc(int *hist_out, unsigned char *img_in, int img_size, int nbr_bin) {
         __shared__ int private_hist[256];
 
-        int i = threadIdx.x + blockIdx.x*blockDim.x,
-            stride = blockDim.x * gridDim.x;
+        int i = threadIdx.x + blockIdx.x*blockDim.x;
+        int it = 0, accum = 0, prev_pixel_val = -1;
 
+        it = i*CFACTOR;
         private_hist[threadIdx.x] = 0;
         __syncthreads();
-		
-        while (i < img_size) {
-            atomicAdd(&(private_hist[img_in[i]]), 1);
-            i += stride;
+
+        while (it < min(img_size, (i+1)*CFACTOR)) {
+            int pixel_val = img_in[it];
+            if (pixel_val == prev_pixel_val) {
+                accum++;
+            }
+            else{
+                if (accum > 0) {
+                    atomicAdd(&(private_hist[prev_pixel_val]), accum);
+                }
+                accum = 1;
+                prev_pixel_val = pixel_val;
+            }
+            it++;
         }
+
+        if (accum > 0) {
+            atomicAdd(&(private_hist[prev_pixel_val]), accum);
+        }
+
         __syncthreads();
-        
+
         atomicAdd(&(hist_out[threadIdx.x]), private_hist[threadIdx.x]);
     }
 
