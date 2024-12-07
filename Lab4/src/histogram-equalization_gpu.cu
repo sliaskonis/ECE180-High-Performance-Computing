@@ -6,7 +6,9 @@ extern "C" {
     #include "colours.h"
 
     #define MAX_THREADS_PER_BLOCK 1024
-    #define GRID_DIM ceil(((float)img_size/MAX_THREADS_PER_BLOCK))
+    #define BLOCK_SIZE 256
+    #define STRIDE 100
+    #define GRID_DIM (ceil((float)img_size/BLOCK_SIZE)/STRIDE)
 
 	/****************************** Helper Functions ******************************/
 	bool checkCudaError(const char *step) {
@@ -21,33 +23,22 @@ extern "C" {
 	/****************************** Kernels ******************************/
 
     // Histogram calculation: stride implementation
-	// __global__ void histogram_calc(int *hist_out, unsigned char *img_in, int img_size, int nbr_bin) {
-    //     __shared__ int private_hist[256];
+	__global__ void histogram_calc(int *hist_out, unsigned char *img_in, int img_size, int nbr_bin) {
+        __shared__ int private_hist[256];
 
-    //     int i = threadIdx.x + blockIdx.x*blockDim.x,
-    //         stride = blockDim.x * gridDim.x;
+        int i = threadIdx.x + blockIdx.x*blockDim.x,
+            stride = blockDim.x * gridDim.x;
 
-    //     if (threadIdx.x < nbr_bin) {
-    //         private_hist[threadIdx.x] = 0;
-    //     }
-    //     __syncthreads();
+        private_hist[threadIdx.x] = 0;
+        __syncthreads();
 		
-    //     while (i < img_size) {
-    //         atomicAdd(&(private_hist[img_in[i]]), 1);
-    //         i += stride;
-    //     }
-    //     __syncthreads();
+        while (i < img_size) {
+            atomicAdd(&(private_hist[img_in[i]]), 1);
+            i += stride;
+        }
+        __syncthreads();
         
-    //     if (threadIdx.x < nbr_bin) {
-    //         atomicAdd(&(hist_out[threadIdx.x]), private_hist[threadIdx.x]);
-    //     }
-    // }
-
-    // Histogram calculation: naive implementation
-    __global__ void histogram_calc(int *d_hist_out, unsigned char *d_img_in, int nbr_bin) {
-        int tid = threadIdx.x + blockIdx.x*blockDim.x;
-		
-        atomicAdd(&(d_hist_out[d_img_in[tid]]), 1);
+        atomicAdd(&(hist_out[threadIdx.x]), private_hist[threadIdx.x]);
     }
 
     // Histogram equalization application: naive implementation
@@ -84,7 +75,7 @@ extern "C" {
         cudaEventCreate(&hist_equ_kernel_end);
 
 
-        dim3 block(MAX_THREADS_PER_BLOCK, 1, 1);
+        dim3 block(BLOCK_SIZE, 1, 1);
         dim3 grid(GRID_DIM, 1, 1);
 
         cudaEventRecord(gpu_start, 0);
@@ -104,7 +95,7 @@ extern "C" {
         cudaEventRecord(memory_transfers, 0);
 
         /************************* Histogram calculation kernel launch *************************/
-        histogram_calc<<<grid, block>>>(d_hist_out, d_img_in, nbr_bin);
+        histogram_calc<<<grid, block>>>(d_hist_out, d_img_in, img_size, nbr_bin);
 		
         cudaEventRecord(hist_kernel, 0);
         cudaEventSynchronize(hist_kernel);
@@ -136,10 +127,13 @@ extern "C" {
         
         cudaMemcpy(d_lut, lut, sizeof(int)*nbr_bin, cudaMemcpyHostToDevice);
         
+        dim3 block2(MAX_THREADS_PER_BLOCK, 1, 1);
+        dim3 grid2(ceil((float)img_size/MAX_THREADS_PER_BLOCK), 1, 1);
+        
         cudaEventRecord(hist_equ_kernel_start, 0);
 
         /************************* Histogram equalization kernel launch *************************/
-        histogram_equ<<<grid, block>>>(d_img_in, d_lut);
+        histogram_equ<<<grid2, block2>>>(d_img_in, d_lut);
         
         cudaEventRecord(hist_equ_kernel_end, 0);
         cudaEventSynchronize(hist_equ_kernel_end);
