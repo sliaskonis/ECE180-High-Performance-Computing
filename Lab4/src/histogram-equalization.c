@@ -23,12 +23,6 @@ void histogram_equalization_cpu(unsigned char * img_out, unsigned char * img_in,
     cdf = 0;
     min = 0;
     i = 0;
-
-    for (int j = 0; j < 256; j++) {
-        printf("%d ", hist_in[j]);
-    }
-    printf("\n");
-    
     while(min == 0){
         min = hist_in[i++];
     }
