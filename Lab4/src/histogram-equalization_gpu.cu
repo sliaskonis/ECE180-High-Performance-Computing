@@ -114,6 +114,7 @@ extern "C" {
 		unsigned char *d_img_in;
         int *d_hist_out;
         int *d_lut;
+        int value;
 
         cudaEvent_t gpu_start, gpu_stop, memory_transfers, hist_kernel, cdf_kernel, hist_equ_kernel_end;
         cudaEventCreate(&gpu_start);
@@ -132,7 +133,7 @@ extern "C" {
         padding = (img_size%MAX_THREADS_PER_BLOCK) ? (MAX_THREADS_PER_BLOCK - (img_size%MAX_THREADS_PER_BLOCK)) : 0;
 
 		padded_size = img_size + padding;
-
+        value = -1*padding;
         // Initialize histgrao[0] to -padding since padding elements
         // will increment hist_out[0] by 1
 
@@ -142,7 +143,7 @@ extern "C" {
 
         cudaMemset (d_img_in,   0, sizeof(unsigned char)*padded_size);
         cudaMemset (d_hist_out, 0, sizeof(int)*nbr_bin);
-        cudaMemset (d_hist_out, (-1)*padding, sizeof(int));
+        cudaMemset (d_hist_out, &value, sizeof(int));
 
 		cudaMemcpy(d_img_in, img_in, sizeof(unsigned char)*img_size, cudaMemcpyHostToDevice);
 
