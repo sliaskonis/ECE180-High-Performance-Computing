@@ -77,14 +77,11 @@ extern "C" {
         }
         d = img_size - min;
 
-        for (int i = 0; i < threadIdx.x; i++) {
+        for (int i = 0; i <= threadIdx.x; i++) {
             cdf += priv_hist[i];
         }
 
-        d_lut[threadIdx.x] = (int)(((float)cdf - min)*255/d + 0.5);
-        if (d_lut[threadIdx.x] < 0) {
-            d_lut[threadIdx.x] = 0;
-        }
+        d_lut[threadIdx.x] = max((int)(((float)cdf - min)*255/d + 0.5), 0);
     }
 
 
@@ -143,7 +140,7 @@ extern "C" {
 
         cudaMemset (d_img_in,   0, sizeof(unsigned char)*padded_size);
         cudaMemset (d_hist_out, 0, sizeof(int)*nbr_bin);
-        cudaMemset (d_hist_out, &value, sizeof(int));
+        cudaMemset (d_hist_out, value, sizeof(int));
 
 		cudaMemcpy(d_img_in, img_in, sizeof(unsigned char)*img_size, cudaMemcpyHostToDevice);
 
