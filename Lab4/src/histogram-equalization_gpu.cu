@@ -201,6 +201,13 @@ extern "C" {
         cudaEventElapsedTime(&elapsed_time, hist_equ_kernel_end, gpu_stop);
         printf(MAG"\t%f (memory transfers + cleanup)\n" RESET, elapsed_time/1000);
 
+        cudaEventDestroy(gpu_start);
+        cudaEventDestroy(gpu_stop);
+        cudaEventDestroy(memory_transfers);
+        cudaEventDestroy(hist_kernel);
+        cudaEventDestroy(cdf_kernel);
+        cudaEventDestroy(hist_equ_kernel_end);
+
         // Reset the device
         cudaDeviceReset();
     }
