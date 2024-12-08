@@ -9,8 +9,8 @@ extern "C" {
     #define BLOCK_SIZE 256
     #define CFACTOR 10
     #define STRIDE 200
-    #define GRID_DIM_1 (ceil((float)img_size/BLOCK_SIZE)/CFACTOR)
-    #define GRID_DIM_2 (ceil((float)img_size/MAX_THREADS_PER_BLOCK)/STRIDE)
+    #define GRID_DIM_1 ceil(((float)img_size/BLOCK_SIZE)/CFACTOR)
+    #define GRID_DIM_2 ceil(((float)img_size/MAX_THREADS_PER_BLOCK)/STRIDE)
 
 	/****************************** Helper Functions ******************************/
 	bool checkCudaError(const char *step) {
@@ -62,7 +62,7 @@ extern "C" {
     }
 
     // CDF kernel
-    __global__ void cdf_calc(int *d_lut, int *d_hist, int img_size, int nbr_bin) {
+    __global__ void cdf_calc(int *d_hist, int img_size, int nbr_bin) {
         int min = 0, d, cdf = 0, idx = 0;
 
         __shared__ int priv_hist[256];
@@ -81,7 +81,7 @@ extern "C" {
             cdf += priv_hist[i];
         }
 
-        d_lut[threadIdx.x] = max((int)(((float)cdf - min)*255/d + 0.5), 0);
+        d_hist[threadIdx.x] = max((int)(((float)cdf - min)*255/d + 0.5), 0);
     }
 
 
@@ -108,7 +108,6 @@ extern "C" {
         float elapsed_time;
 		unsigned char *d_img_in;
         int *d_hist_out;
-        int *d_lut;
 
         cudaEvent_t gpu_start, gpu_stop, memory_transfers, hist_kernel, cdf_kernel, hist_equ_kernel_end;
         cudaEventCreate(&gpu_start);
@@ -126,7 +125,6 @@ extern "C" {
         /************************* Device Memory Allocation *************************/
 		cudaMalloc((void**) &d_img_in,	 sizeof(unsigned char)*img_size);
         cudaMalloc((void**) &d_hist_out, sizeof(int)*nbr_bin);
-        cudaMalloc((void**) &d_lut,      sizeof(int)*nbr_bin);
 
         cudaMemset (d_img_in,   0, sizeof(unsigned char)*img_size);
         cudaMemset (d_hist_out, 0, sizeof(int)*nbr_bin);
@@ -143,7 +141,7 @@ extern "C" {
 		checkCudaError("Histogram calculation");
 
         /************************* CDF calculation kernel launch *************************/
-        cdf_calc<<<1, 256>>>(d_lut, d_hist_out, img_size, nbr_bin);
+        cdf_calc<<<1, 256>>>(d_hist_out, img_size, nbr_bin);
 
         cudaEventRecord(cdf_kernel, 0);
         cudaEventSynchronize(cdf_kernel);
@@ -152,7 +150,7 @@ extern "C" {
         dim3 grid2(GRID_DIM_2, 1, 1);
 
         /************************* Histogram equalization kernel launch *************************/
-        histogram_equ<<<grid2, block2>>>(d_img_in, d_lut, img_size);
+        histogram_equ<<<grid2, block2>>>(d_img_in, d_hist_out, img_size);
 
         cudaEventRecord(hist_equ_kernel_end, 0);
         cudaEventSynchronize(hist_equ_kernel_end);
@@ -163,7 +161,6 @@ extern "C" {
         cudaMemcpy(img_in, d_img_in, sizeof(unsigned char)*img_size, cudaMemcpyDeviceToHost);
 
         // Free non-wanted memory
-        cudaFree(d_lut);
         cudaFree(d_img_in);
         cudaFree(d_hist_out);
 
