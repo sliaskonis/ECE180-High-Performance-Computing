@@ -29,13 +29,6 @@ extern "C" {
         int i = threadIdx.x + blockIdx.x*blockDim.x;
         int it = 0, accum = 0, prev_pixel_val = -1;
 
-        if(i == 0) {
-            for (int j = 0; j < 256; j++) {
-                printf("%d ", hist_out[i]);
-            }
-            printf("\n");
-        }
-        __syncthreads();
         it = i*CFACTOR;
 
         if (threadIdx.x < 256) {
@@ -128,7 +121,6 @@ extern "C" {
         cudaEventCreate(&cdf_kernel);
         cudaEventCreate(&hist_equ_kernel_end);
 
-
         dim3 block(BLOCK_SIZE, 1, 1);
         dim3 grid(GRID_DIM_1, 1, 1);
 
@@ -138,20 +130,15 @@ extern "C" {
 
 		padded_size = img_size + padding;
         value = -1*padding;
-        // Initialize histgrao[0] to -padding since padding elements
-        // will increment hist_out[0] by 1
 
 		cudaMalloc((void**) &d_img_in,	 sizeof(unsigned char)*padded_size);
         cudaMalloc((void**) &d_hist_out, sizeof(int)*nbr_bin);
         cudaMalloc((void**) &d_lut,      sizeof(int)*nbr_bin);
 
         cudaMemset (d_img_in,   0, sizeof(unsigned char)*padded_size);
-
-        // cudaMemcpy (d_hist_out, &value, sizeof(int), cudaMemcpyHostToDevice);
         cudaMemset (d_hist_out, 0, sizeof(int)*nbr_bin);
 
-
-
+        cudaMemcpy (&d_hist_out[0], &value, sizeof(int), cudaMemcpyHostToDevice);
 		cudaMemcpy(d_img_in, img_in, sizeof(unsigned char)*img_size, cudaMemcpyHostToDevice);
 
         cudaEventRecord(memory_transfers, 0);
