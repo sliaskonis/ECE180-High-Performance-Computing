@@ -63,9 +63,9 @@ extern "C" {
 
     // CDF kernel
     __global__ void cdf_calc(int *d_lut, int *d_hist, int img_size, int nbr_bin) {
-        int min = 0, d, cdf = 0;
+        int min = 0, d, cdf = 0, idx = 0;
 
-        __share__ int priv_hist[256];
+        __shared__ int priv_hist[256];
 
         if (threadIdx.x < 256) {
             priv_hist[threadIdx.x] = d_hist[threadIdx.x];
@@ -73,7 +73,7 @@ extern "C" {
         __syncthreads();
 
         while (min == 0) {
-            min = priv_hist[threadIdx.x++];
+            min = priv_hist[idx++];
         }
         d = img_size - min;
 
@@ -110,7 +110,6 @@ extern "C" {
                                 int img_size, int nbr_bin) {
         int padding = 0, padded_size = 0;
         float elapsed_time;
-        int i, cdf, min, d;
         int *lut = (int *)malloc(sizeof(int)*nbr_bin);
         int *hist_out = (int *)malloc(sizeof(int)*nbr_bin);
 
