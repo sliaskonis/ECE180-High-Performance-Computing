@@ -110,8 +110,6 @@ extern "C" {
                                 int img_size, int nbr_bin) {
         int padding = 0, padded_size = 0;
         float elapsed_time;
-        int *lut = (int *)malloc(sizeof(int)*nbr_bin);
-        int *hist_out = (int *)malloc(sizeof(int)*nbr_bin);
 
 		unsigned char *d_img_in;
         int *d_hist_out;
@@ -137,7 +135,6 @@ extern "C" {
 
         // Initialize histgrao[0] to -padding since padding elements
         // will increment hist_out[0] by 1
-        hist_out[0] = (-1)*padding;
 
 		cudaMalloc((void**) &d_img_in,	 sizeof(unsigned char)*padded_size);
         cudaMalloc((void**) &d_hist_out, sizeof(int)*nbr_bin);
@@ -145,6 +142,7 @@ extern "C" {
 
         cudaMemset (d_img_in,   0, sizeof(unsigned char)*padded_size);
         cudaMemset (d_hist_out, 0, sizeof(int)*nbr_bin);
+        cudaMemset (d_hist_out, (-1)*padding, sizeof(int));
 
 		cudaMemcpy(d_img_in, img_in, sizeof(unsigned char)*img_size, cudaMemcpyHostToDevice);
 
