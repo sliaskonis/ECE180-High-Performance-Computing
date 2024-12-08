@@ -24,7 +24,7 @@ int main(int argc, char *argv[]){
     printf(YEL"\nRunning contrast enhancement for gray-scale images on gpu.\n" RESET);
     img_ibuf_g = read_pgm(argv[1]);
     run_gpu_gray_test(img_ibuf_g, argv[3]);
-    free_pgm(img_ibuf_g); 
+    free_pgm(img_ibuf_g);
 
     return 0;
 }
@@ -64,7 +64,7 @@ PGM_IMG read_pgm(const char * path){
     fscanf(in_file, "%d",&result.h);
     fscanf(in_file, "%d\n",&v_max);
     printf("Image size: %d x %d\n", result.w, result.h);
-    result.img = (unsigned char *)malloc(result.w * result.h * sizeof(unsigned char));
+    cudaHostAlloc((void**) &result.img, result.w * result.h * sizeof(unsigned char), cudaHostAllocDefault);
 
     fread(result.img,sizeof(unsigned char), result.w*result.h, in_file);
     fclose(in_file);
@@ -83,6 +83,6 @@ void write_pgm(PGM_IMG img, const char * path){
 
 void free_pgm(PGM_IMG img)
 {
-    free(img.img);
+    cudaFreeHost(img.img);
 }
 
