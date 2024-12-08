@@ -61,12 +61,31 @@ extern "C" {
         }
     }
 
-    // // Histogram equalization application: naive implementation
-    // __global__ void histogram_equ(unsigned char *d_img_in, int *d_lut, int img_size) {
-    //     int tid = threadIdx.x + blockIdx.x*blockDim.x;
+    // CDF kernel
+    __global__ void cdf_calc(int *d_lut, int *d_hist, int img_size, int nbr_bin) {
+        int min = 0, d, cdf = 0;
 
-    //     d_img_in[tid] = (unsigned char)d_lut[d_img_in[tid]];
-    // }
+        __share__ int priv_hist[256];
+
+        if (threadIdx.x < 256) {
+            priv_hist[threadIdx.x] = d_hist[threadIdx.x];
+        }
+        __syncthreads();
+
+        while (min == 0) {
+            min = priv_hist[threadIdx.x++];
+        }
+        d = img_size - min;
+
+        for (int i = 0; i < threadIdx.x; i++) {
+            cdf += priv_hist[i];
+        }
+
+        d_lut[threadIdx.x] = (int)(((float)cdf - min)*255/d + 0.5);
+        if (d_lut[threadIdx.x] < 0) {
+            d_lut[threadIdx.x] = 0;
+        }
+    }
 
 
     // Histogram equalization application: privatization, interleaved partitioning of threads -> coalesced memory accesses
@@ -122,14 +141,14 @@ extern "C" {
 
         cudaMemset (d_img_in,   0, sizeof(unsigned char)*padded_size);
         cudaMemset (d_hist_out, 0, sizeof(int)*nbr_bin);
-        
+
 		cudaMemcpy(d_img_in, img_in, sizeof(unsigned char)*img_size, cudaMemcpyHostToDevice);
 
         cudaEventRecord(memory_transfers, 0);
 
         /************************* Histogram calculation kernel launch *************************/
         histogram_calc<<<grid, block>>>(d_hist_out, d_img_in, img_size, nbr_bin);
-		
+
         cudaEventRecord(hist_kernel, 0);
         cudaEventSynchronize(hist_kernel);
 
@@ -159,15 +178,15 @@ extern "C" {
         }
 
         cudaMemcpy(d_lut, lut, sizeof(int)*nbr_bin, cudaMemcpyHostToDevice);
-        
+
         dim3 block2(MAX_THREADS_PER_BLOCK, 1, 1);
         dim3 grid2(GRID_DIM_2, 1, 1);
-        
+
         cudaEventRecord(hist_equ_kernel_start, 0);
 
         /************************* Histogram equalization kernel launch *************************/
         histogram_equ<<<grid2, block2>>>(d_img_in, d_lut, img_size);
-        
+
         cudaEventRecord(hist_equ_kernel_end, 0);
         cudaEventSynchronize(hist_equ_kernel_end);
 

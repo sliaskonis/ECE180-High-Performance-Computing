@@ -24,7 +24,6 @@ void histogram_equalization_cpu(unsigned char * img_out, unsigned char * img_in,
     min = 0;
     i = 0;
 
-    clock_t start = clock();
     while(min == 0){
         min = hist_in[i++];
     }
@@ -37,9 +36,7 @@ void histogram_equalization_cpu(unsigned char * img_out, unsigned char * img_in,
             lut[i] = 0;
         }
     }
-    clock_t end = clock();
-    double time = (double)(end - start) / CLOCKS_PER_SEC;
-    printf("Time for CPU histogram equalization: %f\n", time);
+
     /* Get the result image */
     for(i = 0; i < img_size; i ++){
         if(lut[img_in[i]] > 255){
