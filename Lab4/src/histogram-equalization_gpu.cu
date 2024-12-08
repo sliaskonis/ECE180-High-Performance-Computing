@@ -7,7 +7,7 @@ extern "C" {
 
     #define MAX_THREADS_PER_BLOCK 1024
     #define BLOCK_SIZE 256
-    #define CFACTOR 10
+    #define CFACTOR 16
     #define STRIDE 200
     #define GRID_DIM_1 (ceil((float)img_size/BLOCK_SIZE)/CFACTOR)
     #define GRID_DIM_2 (ceil((float)img_size/MAX_THREADS_PER_BLOCK)/STRIDE)
@@ -66,7 +66,12 @@ extern "C" {
         int min = 0, d, cdf = 0, idx = 0;
 
         __shared__ int priv_hist[256];
-
+        if (threadIdx.x == 0) {
+            for (int j = 0; j < 256; j++) {
+                printf("%d ", d_hist[j]);
+            }
+            printf("\n");
+        }
         if (threadIdx.x < 256) {
             priv_hist[threadIdx.x] = d_hist[threadIdx.x];
         }
@@ -144,7 +149,7 @@ extern "C" {
         cudaEventRecord(memory_transfers, 0);
 
         /************************* Histogram calculation kernel launch *************************/
-        histogram_calc<<<grid, block>>>(d_hist_out, d_img_in, img_size, nbr_bin);
+        histogram_calc<<<grid, block>>>(d_hist_out, d_img_in, padded_size, nbr_bin);
 
         cudaEventRecord(hist_kernel, 0);
         cudaEventSynchronize(hist_kernel);
@@ -161,7 +166,7 @@ extern "C" {
         dim3 grid2(GRID_DIM_2, 1, 1);
 
         /************************* Histogram equalization kernel launch *************************/
-        histogram_equ<<<grid2, block2>>>(d_img_in, d_lut, img_size);
+        histogram_equ<<<grid2, block2>>>(d_img_in, d_lut, padded_size);
 
         cudaEventRecord(hist_equ_kernel_end, 0);
         cudaEventSynchronize(hist_equ_kernel_end);
