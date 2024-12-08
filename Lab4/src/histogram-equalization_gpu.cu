@@ -118,12 +118,12 @@ extern "C" {
         int *d_hist_out;
         int *d_lut;
 
-        cudaEvent_t gpu_start, gpu_stop, memory_transfers, hist_kernel, hist_equ_kernel_start, hist_equ_kernel_end;
+        cudaEvent_t gpu_start, gpu_stop, memory_transfers, hist_kernel, cdf_kernel, hist_equ_kernel_end;
         cudaEventCreate(&gpu_start);
         cudaEventCreate(&gpu_stop);
         cudaEventCreate(&memory_transfers);
         cudaEventCreate(&hist_kernel);
-        cudaEventCreate(&hist_equ_kernel_start);
+        cudaEventCreate(&cdf_kernel);
         cudaEventCreate(&hist_equ_kernel_end);
 
 
@@ -135,6 +135,11 @@ extern "C" {
         padding = (img_size%MAX_THREADS_PER_BLOCK) ? (MAX_THREADS_PER_BLOCK - (img_size%MAX_THREADS_PER_BLOCK)) : 0;
 
 		padded_size = img_size + padding;
+
+        // Initialize histgrao[0] to -padding since padding elements
+        // will increment hist_out[0] by 1
+        hist_out[0] = (-1)*padding;
+
 		cudaMalloc((void**) &d_img_in,	 sizeof(unsigned char)*padded_size);
         cudaMalloc((void**) &d_hist_out, sizeof(int)*nbr_bin);
         cudaMalloc((void**) &d_lut,      sizeof(int)*nbr_bin);
@@ -154,35 +159,14 @@ extern "C" {
 
 		checkCudaError("Histogram calculation");
 
-		// Copy calculated histogram back to host 
-        cudaMemcpy(hist_out, d_hist_out, sizeof(int)*nbr_bin, cudaMemcpyDeviceToHost);
+        /************************* CDF calculation kernel launch *************************/
+        cdf_calc<<<1, 256>>>(d_lut, d_hist_out, img_size, nbr_bin);
 
-        // Clean histogram counts added by the padding elements
-		// Padding elements are set to 0
-        hist_out[0] = hist_out[0] - padding;
-		
-        // Construct the LUT by calculating the CDF
-        cdf = 0;
-        min = 0;
-        i = 0;
-        while(min == 0){
-            min = hist_out[i++];
-        }
-        d = img_size - min;
-        for(i = 0; i < nbr_bin; i ++){
-            cdf += hist_out[i];
-            lut[i] = (int)(((float)cdf - min)*255/d + 0.5);
-            if(lut[i] < 0){
-                lut[i] = 0;
-            }
-        }
-
-        cudaMemcpy(d_lut, lut, sizeof(int)*nbr_bin, cudaMemcpyHostToDevice);
+        cudaEventRecord(cdf_kernel, 0);
+        cudaEventSynchronize(cdf_kernel);
 
         dim3 block2(MAX_THREADS_PER_BLOCK, 1, 1);
         dim3 grid2(GRID_DIM_2, 1, 1);
-
-        cudaEventRecord(hist_equ_kernel_start, 0);
 
         /************************* Histogram equalization kernel launch *************************/
         histogram_equ<<<grid2, block2>>>(d_img_in, d_lut, img_size);
@@ -202,7 +186,7 @@ extern "C" {
 
         cudaEventRecord(gpu_stop, 0);
         cudaEventSynchronize(gpu_stop);
-        
+
         // Calculate elapsed time for all events
         cudaEventElapsedTime(&elapsed_time, gpu_start, gpu_stop);
         printf( GRN "Total GPU time: %fsec, consists of:\n" RESET, elapsed_time/1000);
@@ -213,10 +197,10 @@ extern "C" {
         cudaEventElapsedTime(&elapsed_time, memory_transfers, hist_kernel);
         printf(MAG"\t%f (histogram kernel)\n" RESET, elapsed_time/1000);
 
-        cudaEventElapsedTime(&elapsed_time, hist_kernel, hist_equ_kernel_start);
-        printf(MAG"\t%f (cdf calculation + memory transfers 2)\n" RESET, elapsed_time/1000);
+        cudaEventElapsedTime(&elapsed_time, hist_kernel, cdf_kernel);
+        printf(MAG"\t%f (cdf calculation)\n" RESET, elapsed_time/1000);
 
-        cudaEventElapsedTime(&elapsed_time, hist_equ_kernel_start, hist_equ_kernel_end);
+        cudaEventElapsedTime(&elapsed_time, cdf_kernel, hist_equ_kernel_end);
         printf(MAG"\t%f (histogram equalization kernel)\n" RESET, elapsed_time/1000);
 
         cudaEventElapsedTime(&elapsed_time, hist_equ_kernel_end, gpu_stop);
