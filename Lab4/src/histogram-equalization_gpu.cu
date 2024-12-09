@@ -107,9 +107,6 @@ extern "C" {
                                 int img_size, int nbr_bin) {
         float elapsed_time;
         int *d_hist_out;
-        unsigned char* d_img_in;
-
-        cudaHostGetDevicePointer(&d_img_in, img_in, 0);
 
         cudaEvent_t gpu_start, gpu_stop, memory_allocation, hist_kernel, cdf_kernel, hist_equ_kernel_end;
         cudaEventCreate(&gpu_start);
@@ -132,7 +129,7 @@ extern "C" {
         cudaEventRecord(memory_allocation, 0);
 
         /************************* Histogram calculation kernel launch *************************/
-        histogram_calc<<<grid, block>>>(d_hist_out, d_img_in, img_size, nbr_bin);
+        histogram_calc<<<grid, block>>>(d_hist_out, img_in, img_size, nbr_bin);
 
         cudaEventRecord(hist_kernel, 0);
         cudaEventSynchronize(hist_kernel);
@@ -151,7 +148,7 @@ extern "C" {
         dim3 grid2(GRID_DIM_2, 1, 1);
 
         /************************* Histogram equalization kernel launch *************************/
-        histogram_equ<<<grid2, block2>>>(d_img_in, d_hist_out, img_size);
+        histogram_equ<<<grid2, block2>>>(img_in, d_hist_out, img_size);
 
         cudaEventRecord(hist_equ_kernel_end, 0);
         cudaEventSynchronize(hist_equ_kernel_end);
@@ -159,11 +156,9 @@ extern "C" {
         checkCudaError("Histogram equalization");
         
         // Free non-wanted memory
-        cudaFree(d_img_in);
         cudaFree(d_hist_out);
 
         cudaEventRecord(gpu_stop, 0);
-        cudaEventSynchronize(gpu_stop);
 
         // Calculate elapsed time for all events
         cudaEventElapsedTime(&elapsed_time, gpu_start, gpu_stop);
@@ -182,7 +177,7 @@ extern "C" {
         printf(MAG"\t%f (histogram equalization kernel)\n" RESET, elapsed_time/1000);
 
         cudaEventElapsedTime(&elapsed_time, hist_equ_kernel_end, gpu_stop);
-        printf(MAG"\t%f (memory transfers + cleanup)\n" RESET, elapsed_time/1000);
+        printf(MAG"\t%f (cleanup)\n" RESET, elapsed_time/1000);
 
         cudaEventDestroy(gpu_start);
         cudaEventDestroy(gpu_stop);
@@ -190,6 +185,5 @@ extern "C" {
         cudaEventDestroy(hist_kernel);
         cudaEventDestroy(cdf_kernel);
         cudaEventDestroy(hist_equ_kernel_end);
-
     }
 }

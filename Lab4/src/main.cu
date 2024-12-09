@@ -27,15 +27,15 @@ int main(int argc, char *argv[]){
 
     img_ibuf_g = read_pgm(argv[1]);
 
-    // printf(YEL "Running contrast enhancement for gray-scale images.\n" RESET);
+    printf(YEL "Running contrast enhancement for gray-scale images.\n" RESET);
 
-    // run_cpu_gray_test(img_ibuf_g, argv[2]);
+    run_cpu_gray_test(img_ibuf_g, argv[2]);
 
     printf(YEL "\nRunning contrast enhancement for gray-scale images on gpu.\n" RESET);
 
     run_gpu_gray_test(img_ibuf_g, argv[3]);
     
-    free_pgm(img_ibuf_g);
+    free_pgm_gpu(img_ibuf_g);
 
     // Reset the device
     cudaDeviceReset();
@@ -94,13 +94,10 @@ PGM_IMG read_pgm(const char * path){
 
     printf("Image size: %d x %d\n", result.w, result.h);
 
-    // TODO: try different flags and monitor behaviour
-    // cudaHostAlloc((void**) &result.img, result.w * result.h * sizeof(unsigned char), cudaHostAllocMapped);
-    // cudaHostAlloc((void**) &result.img, result.w * result.h * sizeof(unsigned char), cudaHostAllocWriteCombined); // need mapped too in our case
-
-    cudaHostAlloc((void**) &result.img, result.w * result.h * sizeof(unsigned char), cudaHostAllocMapped | cudaHostAllocWriteCombined);
+    // Use unified memory
+    cudaMallocManaged((void**) &result.img, result.w * result.h * sizeof(unsigned char));
     
-    checkCudaError("cudaHostAlloc");
+    checkCudaError("cudaManagedAlloc");
 
     if (fread(result.img, sizeof(unsigned char), result.w * result.h, in_file) != (size_t)(result.w * result.h)) {
         fprintf(stderr, "Error reading image data\n");
@@ -123,7 +120,12 @@ void write_pgm(PGM_IMG img, const char * path){
 
 void free_pgm(PGM_IMG img)
 {
-    cudaFreeHost(img.img);
+    free(img.img);
+}
+
+void free_pgm_gpu(PGM_IMG img)
+{
+    cudaFree(img.img);
     checkCudaError("cudaFreeHost");
 }
 
