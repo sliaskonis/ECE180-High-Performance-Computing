@@ -159,6 +159,7 @@ extern "C" {
         cudaFree(d_hist_out);
 
         cudaEventRecord(gpu_stop, 0);
+        cudaEventSynchronize(gpu_stop);
 
         // Calculate elapsed time for all events
         cudaEventElapsedTime(&elapsed_time, gpu_start, gpu_stop);
