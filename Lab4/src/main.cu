@@ -27,11 +27,7 @@ int main(int argc, char *argv[]){
 
     img_ibuf_g = read_pgm(argv[1]);
 
-    printf(YEL "Running contrast enhancement for gray-scale images.\n" RESET);
-
     run_cpu_gray_test(img_ibuf_g, argv[2]);
-
-    printf(YEL "\nRunning contrast enhancement for gray-scale images on gpu.\n" RESET);
 
     run_gpu_gray_test(img_ibuf_g, argv[3]);
     
@@ -47,7 +43,6 @@ void run_cpu_gray_test(PGM_IMG img_in, char *out_filename)
 {
     PGM_IMG img_obuf;
 
-    printf(YEL "Starting CPU processing...\n" RESET);
     img_obuf = contrast_enhancement_cpu(img_in);
     
     write_pgm(img_obuf, out_filename);
@@ -56,7 +51,6 @@ void run_cpu_gray_test(PGM_IMG img_in, char *out_filename)
 
 void run_gpu_gray_test(PGM_IMG img_in, char *out_filename)
 {
-    printf(YEL "Starting GPU processing...\n" RESET);
 
     histogram_gpu(img_in.img, img_in.w*img_in.h, 256);   
     
@@ -91,8 +85,6 @@ PGM_IMG read_pgm(const char * path){
         fprintf(stderr, "Error reading max value\n");
         exit(EXIT_FAILURE);
     }
-
-    printf("Image size: %d x %d\n", result.w, result.h);
 
     // Use unified memory
     cudaMallocManaged((void**) &result.img, result.w * result.h * sizeof(unsigned char));
