@@ -109,9 +109,10 @@ extern "C" {
 		unsigned char *d_img_in;
         int *d_hist_out;
 
-        cudaEvent_t gpu_start, gpu_stop, memory_transfers, hist_kernel, cdf_kernel, hist_equ_kernel_end;
+        cudaEvent_t gpu_start, gpu_stop, memory_allocation, memory_transfers, hist_kernel, cdf_kernel, hist_equ_kernel_end;
         cudaEventCreate(&gpu_start);
         cudaEventCreate(&gpu_stop);
+        cudaEventCreate(&memory_allocation);
         cudaEventCreate(&memory_transfers);
         cudaEventCreate(&hist_kernel);
         cudaEventCreate(&cdf_kernel);
@@ -126,8 +127,10 @@ extern "C" {
 		cudaMalloc((void**) &d_img_in,	 sizeof(unsigned char)*img_size);
         cudaMalloc((void**) &d_hist_out, sizeof(int)*nbr_bin);
 
-        cudaMemset (d_img_in,   0, sizeof(unsigned char)*img_size);
         cudaMemset (d_hist_out, 0, sizeof(int)*nbr_bin);
+
+        cudaEventRecord(memory_allocation, 0);
+
 		cudaMemcpy(d_img_in, img_in, sizeof(unsigned char)*img_size, cudaMemcpyHostToDevice);
                                 
         cudaEventRecord(memory_transfers, 0);
@@ -173,8 +176,11 @@ extern "C" {
         cudaEventElapsedTime(&elapsed_time, gpu_start, gpu_stop);
         printf( GRN "Total GPU time: %fsec, consists of:\n" RESET, elapsed_time/1000);
 
-        cudaEventElapsedTime(&elapsed_time, gpu_start, memory_transfers);
-        printf(MAG"\t%f (memory transfers 1)\n" RESET, elapsed_time/1000);
+        cudaEventElapsedTime(&elapsed_time, gpu_start, memory_allocation);
+        printf(MAG"\t%f (device memory allocation)\n" RESET, elapsed_time/1000);
+        
+        cudaEventElapsedTime(&elapsed_time, memory_allocation, memory_transfers);
+        printf(MAG"\t%f (memory transfers)\n" RESET, elapsed_time/1000);
 
         cudaEventElapsedTime(&elapsed_time, memory_transfers, hist_kernel);
         printf(MAG"\t%f (histogram kernel)\n" RESET, elapsed_time/1000);
