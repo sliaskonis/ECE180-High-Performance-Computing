@@ -37,6 +37,9 @@ int main(int argc, char *argv[]){
     
     free_pgm(img_ibuf_g);
 
+    // Reset the device
+    cudaDeviceReset();
+
     return 0;
 }
 
@@ -54,9 +57,9 @@ void run_cpu_gray_test(PGM_IMG img_in, char *out_filename)
 void run_gpu_gray_test(PGM_IMG img_in, char *out_filename)
 {
     printf(YEL "Starting GPU processing...\n" RESET);
-    // printf("Pix before: %d\n", img_in.img[0]);
-    histogram_gpu(img_in.img, img_in.w*img_in.h, 256);    
-    // printf("Pix after: %d\n", img_in.img[0]);
+
+    histogram_gpu(img_in.img, img_in.w*img_in.h, 256);   
+    
     write_pgm(img_in, out_filename);
 }
 
@@ -105,7 +108,7 @@ PGM_IMG read_pgm(const char * path){
 
 void write_pgm(PGM_IMG img, const char * path){
     FILE * out_file;
-    printf("img[0]=%d\n", img.img[0]);
+
     out_file = fopen(path, "wb");
     fprintf(out_file, "P5\n");
     fprintf(out_file, "%d %d\n255\n",img.w, img.h);

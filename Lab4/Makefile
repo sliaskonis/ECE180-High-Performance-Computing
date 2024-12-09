@@ -1,6 +1,6 @@
 # Variables
-CUDAFLAGS = -I./src -G
-CFLAGS = -O4 -g
+CUDAFLAGS = -I./src 
+CFLAGS = -O4 
 LDFLAGS = -lm
 
 # Source files

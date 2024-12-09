@@ -161,7 +161,7 @@ extern "C" {
 
         // Copy img back to host
         cudaMemcpy(img_in, d_img_in, sizeof(unsigned char)*img_size, cudaMemcpyDeviceToHost);
-
+        
         // Free non-wanted memory
         cudaFree(d_img_in);
         cudaFree(d_hist_out);
@@ -195,7 +195,5 @@ extern "C" {
         cudaEventDestroy(cdf_kernel);
         cudaEventDestroy(hist_equ_kernel_end);
 
-        // Reset the device
-        cudaDeviceReset();
     }
 }
