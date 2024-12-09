@@ -93,7 +93,11 @@ PGM_IMG read_pgm(const char * path){
     }
 
     printf("Image size: %d x %d\n", result.w, result.h);
-    cudaHostAlloc((void**) &result.img, result.w * result.h * sizeof(unsigned char), cudaHostAllocDefault);
+    // cudaHostAlloc((void**) &result.img, result.w * result.h * sizeof(unsigned char), cudaHostAllocDefault);
+
+    // TODO: try different flags and monitor behaviour
+    cudaHostAlloc((void**) &result.img, result.w * result.h * sizeof(unsigned char), cudaHostAllocMapped);
+    // cudaHostAlloc((void**) &result.img, result.w * result.h * sizeof(unsigned char), cudaHostAllocDefault);
     
     checkCudaError("cudaHostAlloc");
 
