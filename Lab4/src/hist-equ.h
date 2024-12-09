@@ -7,6 +7,9 @@ typedef struct{
     unsigned char * img;
 } PGM_IMG;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 PGM_IMG read_pgm(const char * path);
 void write_pgm(PGM_IMG img, const char * path);
 void free_pgm(PGM_IMG img);
@@ -19,5 +22,7 @@ void histogram_gpu(unsigned char *img, int img_size, int nbr_bin);
 
 //Contrast enhancement for gray-scale images
 PGM_IMG contrast_enhancement_cpu(PGM_IMG img_in);
-
+#ifdef __cplusplus
+}
+#endif
 #endif
