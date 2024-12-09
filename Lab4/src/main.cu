@@ -94,6 +94,7 @@ void write_pgm(PGM_IMG img, const char * path){
     out_file = fopen(path, "wb");
     fprintf(out_file, "P5\n");
     fprintf(out_file, "%d %d\n255\n",img.w, img.h);
+    printf("img: %d\n", img.img[0]);
     fwrite(img.img,sizeof(unsigned char), img.w*img.h, out_file);
     fclose(out_file);
 }
