@@ -129,7 +129,7 @@ extern "C" {
         cudaMemset (d_img_in,   0, sizeof(unsigned char)*img_size);
         cudaMemset (d_hist_out, 0, sizeof(int)*nbr_bin);
 		cudaMemcpy(d_img_in, img_in, sizeof(unsigned char)*img_size, cudaMemcpyHostToDevice);
-
+                                
         cudaEventRecord(memory_transfers, 0);
 
         /************************* Histogram calculation kernel launch *************************/
@@ -146,6 +146,8 @@ extern "C" {
         cudaEventRecord(cdf_kernel, 0);
         cudaEventSynchronize(cdf_kernel);
 
+        checkCudaError("Cdf calculation");
+        
         dim3 block2(MAX_THREADS_PER_BLOCK, 1, 1);
         dim3 grid2(GRID_DIM_2, 1, 1);
 

@@ -4,7 +4,7 @@ CFLAGS = -O4 -g
 LDFLAGS = -lm
 
 # Source files
-SRC = src/histogram-equalization_gpu.cu src/main.cu src/contrast-enhancement.c src/histogram-equalization.c
+SRC = src/histogram-equalization_gpu.cu src/main.cu src/contrast-enhancement.cu src/histogram-equalization.c
 
 # Output executable
 OUTPUT = main

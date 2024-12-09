@@ -14,7 +14,7 @@ PGM_IMG contrast_enhancement_cpu(PGM_IMG img_in)
 
     result.w = img_in.w;
     result.h = img_in.h;
-    result.img = (unsigned char *)malloc(result.w * result.h * sizeof(unsigned char));
+    cudaHostAlloc((void**) &result.img, result.w * result.h * sizeof(unsigned char), cudaHostAllocDefault);
 
     start = clock();
     histogram(histo, img_in.img, img_in.h * img_in.w, 256);
