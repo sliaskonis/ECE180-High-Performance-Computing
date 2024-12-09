@@ -27,9 +27,9 @@ int main(int argc, char *argv[]){
 
     img_ibuf_g = read_pgm(argv[1]);
 
-    printf(YEL "Running contrast enhancement for gray-scale images.\n" RESET);
+    // printf(YEL "Running contrast enhancement for gray-scale images.\n" RESET);
 
-    run_cpu_gray_test(img_ibuf_g, argv[2]);
+    // run_cpu_gray_test(img_ibuf_g, argv[2]);
 
     printf(YEL "\nRunning contrast enhancement for gray-scale images on gpu.\n" RESET);
 
@@ -93,11 +93,12 @@ PGM_IMG read_pgm(const char * path){
     }
 
     printf("Image size: %d x %d\n", result.w, result.h);
-    // cudaHostAlloc((void**) &result.img, result.w * result.h * sizeof(unsigned char), cudaHostAllocDefault);
 
     // TODO: try different flags and monitor behaviour
-    cudaHostAlloc((void**) &result.img, result.w * result.h * sizeof(unsigned char), cudaHostAllocMapped);
-    // cudaHostAlloc((void**) &result.img, result.w * result.h * sizeof(unsigned char), cudaHostAllocDefault);
+    // cudaHostAlloc((void**) &result.img, result.w * result.h * sizeof(unsigned char), cudaHostAllocMapped);
+    // cudaHostAlloc((void**) &result.img, result.w * result.h * sizeof(unsigned char), cudaHostAllocWriteCombined); // need mapped too in our case
+
+    cudaHostAlloc((void**) &result.img, result.w * result.h * sizeof(unsigned char), cudaHostAllocMapped | cudaHostAllocWriteCombined);
     
     checkCudaError("cudaHostAlloc");
 
