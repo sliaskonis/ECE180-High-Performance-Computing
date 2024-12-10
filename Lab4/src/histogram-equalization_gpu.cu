@@ -8,7 +8,7 @@ extern "C" {
     #define MAX_THREADS_PER_BLOCK 1024
     #define BLOCK_SIZE 256
     #define CFACTOR 10
-    #define STRIDE 200
+    #define STRIDE 100
     #define GRID_DIM_1 ceil(((float)img_size/BLOCK_SIZE)/CFACTOR)
     #define GRID_DIM_2 ceil(((float)img_size/MAX_THREADS_PER_BLOCK)/STRIDE)
 
@@ -23,6 +23,8 @@ extern "C" {
 	}
 
 	/****************************** Kernels ******************************/
+
+    // Histogram
     __global__ void histogram_calc(int *hist_out, unsigned char *img_in, int img_size, int nbr_bin) {
         __shared__ int private_hist[256];
 
