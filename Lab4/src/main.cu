@@ -88,7 +88,7 @@ PGM_IMG read_pgm(const char * path){
 
     // Use unified memory
     cudaMallocManaged((void**) &result.img, result.w * result.h * sizeof(unsigned char));
-    
+
     checkCudaError("cudaManagedAlloc");
 
     if (fread(result.img, sizeof(unsigned char), result.w * result.h, in_file) != (size_t)(result.w * result.h)) {
