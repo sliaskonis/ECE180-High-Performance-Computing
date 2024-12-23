@@ -1,3 +1,4 @@
+#include <omp.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,7 +15,7 @@ void randomizeBodies(float *data, int n) {
 }
 
 void bodyForce(Body *p, float dt, int n) {
-  for (int i = 0; i < n; i++) { 
+  for (int i = 0; i < n; i++) {
     float Fx = 0.0f; float Fy = 0.0f; float Fz = 0.0f;
 
     for (int j = 0; j < n; j++) {
@@ -33,7 +34,7 @@ void bodyForce(Body *p, float dt, int n) {
 }
 
 int main(const int argc, const char** argv) {
-  
+
   int nBodies = 30000;
   if (argc > 1) nBodies = atoi(argv[1]);
 
@@ -61,11 +62,11 @@ int main(const int argc, const char** argv) {
 
     const double tElapsed = GetTimer() / 1000.0;
     if (iter > 1) { // First iter is warm up
-      totalTime += tElapsed; 
+      totalTime += tElapsed;
     }
     printf("Iteration %d: %.3f seconds\n", iter, tElapsed);
   }
-  double avgTime = totalTime / (double)(nIters-1); 
+  double avgTime = totalTime / (double)(nIters-1);
 
   printf("%d Bodies: average %0.3f Billion Interactions / second\n", nBodies, 1e-9 * nBodies * nBodies / avgTime);
   free(buf);
