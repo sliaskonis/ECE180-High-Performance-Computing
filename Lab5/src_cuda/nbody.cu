@@ -73,7 +73,7 @@ int main(const int argc, const char** argv) {
 	float totalTime = 0.0f, elapsed_time = 0.0f;
 	float *buf = (float*)malloc(bytes);
 	float *d_buf;
-	Body *d_p;
+	Body *d_p, *p = (Body*)buf;
 	cudaEvent_t iter_start, iter_end;
 
 	cudaEventCreate(&iter_start);
