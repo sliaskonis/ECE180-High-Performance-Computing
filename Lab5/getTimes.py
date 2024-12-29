@@ -1,0 +1,68 @@
+import subprocess
+import sys
+import os
+
+if (len(sys.argv) != 4):
+    print("Usage: python getTimes.py <implementation> <iterations> <nun particles>")
+    print("  <implementation> = serial | openmp | cuda")
+    exit(1)
+
+implType = {
+    "serial": "src_orig",
+    "openmp": "src_openmp",
+    "cuda": "src_cuda"
+}
+
+# Define the directory containing the Makefile and executable
+src_dir = implType.get(sys.argv[1])
+nbody_executable = os.path.join(src_dir, "nbody")
+
+# Navigate to the directory and run `make`
+if not os.path.isdir(src_dir):
+    print(f"Error: Directory {src_dir} does not exist.")
+    exit(1)
+
+try:
+    print(f"Compiling {nbody_executable}...")
+    subprocess.run(["make"], cwd=src_dir, check=True)
+    print("Compile successful.")
+except subprocess.CalledProcessError as e:
+    print(f"Error during 'make': {e}")
+    exit(1)
+
+# Check if the executable was created
+if not os.path.isfile(nbody_executable):
+    print(f"Error: {nbody_executable} does not exist after 'make'.")
+    exit(1)
+
+# Execute the program multiple times
+num_executions = int(sys.argv[2])
+outputs = []
+
+for i in range(num_executions):
+    print(f"Running iteration {i+1}...")
+    try:
+        result = subprocess.run([nbody_executable, sys.argv[3]], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True, text = True)
+        outputs.append(result.stdout)
+        print(f"Iteration {i+1} output:\n{result.stdout}")
+    except subprocess.CalledProcessError as e:
+        print(f"Error during execution {i+1}: {e}")
+        print(f"Standard Error:\n{e.stderr}")
+        break
+
+# Save outputs to a file
+output_file = sys.argv[1] + "_outputs.txt"
+with open(output_file, "w") as f:
+    for i, output in enumerate(outputs, start=1):
+        f.write(f"Iteration {i} Output:\n{output}\n{'='*40}\n")
+
+print(f"Outputs saved to {output_file}")
+
+# Make clean
+try:
+    print("Cleaning up...")
+    subprocess.run(["make", "clean"], cwd=src_dir, check=True)
+    print("Clean successful.")
+except subprocess.CalledProcessError as e:
+    print(f"Error during 'make clean': {e}")
+    exit(1)
