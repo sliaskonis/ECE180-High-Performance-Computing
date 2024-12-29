@@ -75,7 +75,9 @@ int main(const int argc, const char** argv) {
   	double avgTime = totalTime / (double)(nIters-1);
 
   	printf("%d Bodies: average %0.3f Billion Interactions / second\n", nBodies, 1e-9 * nBodies * nBodies / avgTime);
+	printf("Total time: %.3f\n", totalTime);
 
+#ifdef SAVE_FINAL_COORDINATES
   	// Print final coordinates into a file
   	printf("Writing final coordinates to openmp_nbody.txt\n");
   	FILE *fd = fopen("openmp_nbody.txt", "w");
@@ -94,6 +96,7 @@ int main(const int argc, const char** argv) {
 	fclose(fd);
 
 	printf("Data written successfully\n");
+#endif
   	
 	free(buf);
 }

@@ -120,6 +120,7 @@ int main(const int argc, const char** argv) {
 
   	printf("%d Bodies: average %0.3f Billion Interactions / second\n", nBodies, 1e-9 * nBodies * nBodies / avgTime);
 
+#ifdef SAVE_FINAL_COORDINATES
 	/****************************** Save Final Coordinates ******************************/
 	printf("Writing final coordinates to cuda_nbody.txt\n");
 	FILE *fd = fopen("cuda_nbody.txt", "w");
@@ -138,6 +139,7 @@ int main(const int argc, const char** argv) {
 	fclose(fd);
 
 	printf("Data written successfully\n");
+#endif
 	
 	free(buf);
 	
