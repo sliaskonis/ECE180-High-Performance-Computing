@@ -31,14 +31,12 @@ for line in lines:
     if interactions_match:
         interactions.append(float(interactions_match.group(1)))  # Append the interactions to the list
 
-# Display the results
-print("Total Times for Each Iteration:", total_times)
-print("Interactions for Each Iteration:", interactions)
-
 # Calculate and display the average and standard deviation of the total times
 if total_times:
-    avg_time = np.mean(total_times)  
-    std_time = np.std(total_times) 
+    avg_time = np.mean(total_times)
+    std_time = np.std(total_times)
+    avg_interactions = np.mean(interactions)
+    std_interactions = np.std(interactions)
     print(f"Average Total Time: {avg_time:.3f} seconds")
     print(f"Standard Deviation of Total Time: {std_time:.3f} seconds")
 else:
