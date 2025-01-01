@@ -2,8 +2,8 @@ import subprocess
 import sys
 import os
 
-if (len(sys.argv) != 4):
-    print("Usage: python getTimes.py <implementation> <iterations> <nun particles>")
+if len(sys.argv) != 4:
+    print("Usage: python getTimes.py <implementation> <iterations> <num_particles>")
     print("  <implementation> = serial | openmp | cuda")
     exit(1)
 
@@ -21,6 +21,11 @@ nbody_executable = os.path.join(src_dir, "nbody")
 if not os.path.isdir(src_dir):
     print(f"Error: Directory {src_dir} does not exist.")
     exit(1)
+
+# Create a directory to store the timing results
+results_dir = "results"
+num_particles_dir = os.path.join(results_dir, sys.argv[3])  # Subdirectory for the number of particles
+os.makedirs(num_particles_dir, exist_ok=True)
 
 try:
     print(f"Compiling {nbody_executable}...")
@@ -42,7 +47,7 @@ outputs = []
 for i in range(num_executions):
     print(f"Running iteration {i+1}...")
     try:
-        result = subprocess.run([nbody_executable, sys.argv[3]], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True, text = True)
+        result = subprocess.run([nbody_executable, sys.argv[3]], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True, text=True)
         outputs.append(result.stdout)
         print(f"Iteration {i+1} output:\n{result.stdout}")
     except subprocess.CalledProcessError as e:
@@ -50,8 +55,8 @@ for i in range(num_executions):
         print(f"Standard Error:\n{e.stderr}")
         break
 
-# Save outputs to a file
-output_file = sys.argv[1] + "_outputs.txt"
+# Save outputs to a file in the results/num_particles directory
+output_file = os.path.join(num_particles_dir, f"{sys.argv[1]}_times.txt")
 with open(output_file, "w") as f:
     for i, output in enumerate(outputs, start=1):
         f.write(f"Iteration {i} Output:\n{output}\n{'='*40}\n")
