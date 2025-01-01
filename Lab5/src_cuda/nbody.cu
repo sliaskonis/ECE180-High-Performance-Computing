@@ -119,6 +119,7 @@ int main(const int argc, const char** argv) {
 	cudaFree(d_buf);
 
   	printf("%d Bodies: average %0.3f Billion Interactions / second\n", nBodies, 1e-9 * nBodies * nBodies / avgTime);
+	printf("Total time: %.3f\n", totalTime);
 
 #ifdef SAVE_FINAL_COORDINATES
 	/****************************** Save Final Coordinates ******************************/
