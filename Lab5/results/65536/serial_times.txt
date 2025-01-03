@@ -1,0 +1,105 @@
+Iteration 1 Output:
+Iteration 1: 22.518 seconds
+Iteration 2: 22.514 seconds
+Iteration 3: 22.492 seconds
+Iteration 4: 22.486 seconds
+Iteration 5: 22.469 seconds
+Iteration 6: 22.492 seconds
+Iteration 7: 22.487 seconds
+Iteration 8: 22.487 seconds
+Iteration 9: 22.488 seconds
+Iteration 10: 22.483 seconds
+65536 Bodies: average 0.191 Billion Interactions / second
+Total time: 202.397
+
+========================================
+Iteration 2 Output:
+Iteration 1: 22.741 seconds
+Iteration 2: 22.740 seconds
+Iteration 3: 22.757 seconds
+Iteration 4: 22.738 seconds
+Iteration 5: 22.742 seconds
+Iteration 6: 22.723 seconds
+Iteration 7: 22.729 seconds
+Iteration 8: 22.731 seconds
+Iteration 9: 22.726 seconds
+Iteration 10: 22.754 seconds
+65536 Bodies: average 0.189 Billion Interactions / second
+Total time: 204.639
+
+========================================
+Iteration 3 Output:
+Iteration 1: 22.720 seconds
+Iteration 2: 22.750 seconds
+Iteration 3: 22.758 seconds
+Iteration 4: 22.740 seconds
+Iteration 5: 22.753 seconds
+Iteration 6: 22.716 seconds
+Iteration 7: 22.746 seconds
+Iteration 8: 22.756 seconds
+Iteration 9: 22.739 seconds
+Iteration 10: 22.756 seconds
+65536 Bodies: average 0.189 Billion Interactions / second
+Total time: 204.715
+
+========================================
+Iteration 4 Output:
+Iteration 1: 22.726 seconds
+Iteration 2: 22.724 seconds
+Iteration 3: 22.721 seconds
+Iteration 4: 22.723 seconds
+Iteration 5: 22.754 seconds
+Iteration 6: 22.752 seconds
+Iteration 7: 22.727 seconds
+Iteration 8: 22.753 seconds
+Iteration 9: 22.724 seconds
+Iteration 10: 22.744 seconds
+65536 Bodies: average 0.189 Billion Interactions / second
+Total time: 204.622
+
+========================================
+Iteration 5 Output:
+Iteration 1: 22.509 seconds
+Iteration 2: 22.373 seconds
+Iteration 3: 22.374 seconds
+Iteration 4: 22.374 seconds
+Iteration 5: 22.372 seconds
+Iteration 6: 22.373 seconds
+Iteration 7: 22.370 seconds
+Iteration 8: 22.373 seconds
+Iteration 9: 22.370 seconds
+Iteration 10: 22.371 seconds
+65536 Bodies: average 0.192 Billion Interactions / second
+Total time: 201.350
+
+========================================
+Iteration 6 Output:
+Iteration 1: 22.664 seconds
+Iteration 2: 22.531 seconds
+Iteration 3: 22.505 seconds
+Iteration 4: 22.514 seconds
+Iteration 5: 22.528 seconds
+Iteration 6: 22.520 seconds
+Iteration 7: 22.523 seconds
+Iteration 8: 22.516 seconds
+Iteration 9: 22.522 seconds
+Iteration 10: 22.530 seconds
+65536 Bodies: average 0.191 Billion Interactions / second
+Total time: 202.689
+
+========================================
+Iteration 7 Output:
+Iteration 1: 22.696 seconds
+Iteration 2: 22.694 seconds
+Iteration 3: 22.714 seconds
+Iteration 4: 22.713 seconds
+Iteration 5: 22.719 seconds
+Iteration 6: 22.724 seconds
+Iteration 7: 22.706 seconds
+Iteration 8: 22.703 seconds
+Iteration 9: 22.705 seconds
+Iteration 10: 22.705 seconds
+65536 Bodies: average 0.189 Billion Interactions / second
+Total time: 204.382
+
+========================================
