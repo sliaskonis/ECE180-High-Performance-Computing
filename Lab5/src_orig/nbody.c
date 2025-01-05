@@ -71,9 +71,14 @@ int main(const int argc, const char** argv) {
 	printf("Total time: %.3f\n", totalTime);
 	
 #ifdef SAVE_FINAL_COORDINATES
-	// Print final coordinates into a file
-  	printf("Writing final coordinates to serial_nbody.txt\n");
-  	FILE *fd = fopen("serial_nbody.txt", "w");
+	/****************************** Save Final Coordinates ******************************/
+	char filename[256];
+
+	sprintf(filename, "serial_coordinates_%d.txt", nBodies);
+
+	printf("Writing final coordinates to %s\n", filename);
+	
+	FILE *fd = fopen(filename, "w");
 
 	if (!fd) {
 		perror("Failed opening file");

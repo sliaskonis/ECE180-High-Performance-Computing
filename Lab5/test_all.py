@@ -2,7 +2,7 @@ import subprocess
 import sys
 
 # Define the parameters for execution
-implementations = ["serial", "openmp", "cuda"]
+implementations = ["serial"] #, "openmp", "cuda"]
 iterations = sys.argv[1]
 num_particles = [30000, 65536, 131072]
 

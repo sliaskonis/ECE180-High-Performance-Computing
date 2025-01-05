@@ -29,7 +29,7 @@ os.makedirs(num_particles_dir, exist_ok=True)
 
 try:
     print(f"Compiling {nbody_executable}...")
-    subprocess.run(["make"], cwd=src_dir, check=True)
+    subprocess.run(["make",  "SAVE_FINAL_COORDINATES=1"], cwd=src_dir, check=True)
     print("Compile successful.")
 except subprocess.CalledProcessError as e:
     print(f"Error during 'make': {e}")

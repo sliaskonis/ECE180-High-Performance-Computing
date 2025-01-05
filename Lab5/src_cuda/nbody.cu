@@ -123,8 +123,12 @@ int main(const int argc, const char** argv) {
 
 #ifdef SAVE_FINAL_COORDINATES
 	/****************************** Save Final Coordinates ******************************/
-	printf("Writing final coordinates to cuda_nbody.txt\n");
-	FILE *fd = fopen("cuda_nbody.txt", "w");
+	char filename[256];
+
+	sprintf(filename, "cuda_coordinates_%d.txt", nBodies);
+
+	printf("Writing final coordinates to %s\n", filename);
+	FILE *fd = fopen(filename, "w");
 
 	if (!fd) {
 		perror("Failed opening file");

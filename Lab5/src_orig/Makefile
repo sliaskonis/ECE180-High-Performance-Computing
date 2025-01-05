@@ -7,6 +7,10 @@ TARGET = nbody
 # Source files
 SRC = nbody.c
 
+ifeq ($(SAVE_FINAL_COORDINATES),1)
+    CFLAGS += -DSAVE_FINAL_COORDINATES
+endif
+
 # Default target
 all: $(TARGET)
 
