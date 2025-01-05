@@ -8,9 +8,9 @@ if len(sys.argv) != 4:
     exit(1)
 
 implType = {
-    "serial": "src_orig",
-    "openmp": "src_openmp",
-    "cuda": "src_cuda"
+    "serial": "src/src_orig",
+    "openmp": "src/src_openmp",
+    "cuda": "src/src_cuda"
 }
 
 # Define the directory containing the Makefile and executable
