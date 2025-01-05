@@ -42,7 +42,7 @@ def parse_and_calculate(file_name):
         print("No data available for calculation.")
         return None, None, None, None
 
-results_dir = "results"
+results_dir = sys.argv[1]
 
 serial_times = []
 openmp_time = []
