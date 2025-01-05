@@ -1,0 +1,112 @@
+Iteration 1 Output:
+Available threads: 56
+Iteration 1: 0.186 seconds
+Iteration 2: 0.184 seconds
+Iteration 3: 0.184 seconds
+Iteration 4: 0.185 seconds
+Iteration 5: 0.184 seconds
+Iteration 6: 0.185 seconds
+Iteration 7: 0.184 seconds
+Iteration 8: 0.185 seconds
+Iteration 9: 0.184 seconds
+Iteration 10: 0.187 seconds
+30000 Bodies: average 4.872 Billion Interactions / second
+Total time: 1.663
+
+========================================
+Iteration 2 Output:
+Available threads: 56
+Iteration 1: 0.188 seconds
+Iteration 2: 0.187 seconds
+Iteration 3: 0.184 seconds
+Iteration 4: 0.184 seconds
+Iteration 5: 0.184 seconds
+Iteration 6: 0.185 seconds
+Iteration 7: 0.187 seconds
+Iteration 8: 0.190 seconds
+Iteration 9: 0.185 seconds
+Iteration 10: 0.184 seconds
+30000 Bodies: average 4.847 Billion Interactions / second
+Total time: 1.671
+
+========================================
+Iteration 3 Output:
+Available threads: 56
+Iteration 1: 0.186 seconds
+Iteration 2: 0.184 seconds
+Iteration 3: 0.184 seconds
+Iteration 4: 0.185 seconds
+Iteration 5: 0.184 seconds
+Iteration 6: 0.184 seconds
+Iteration 7: 0.184 seconds
+Iteration 8: 0.184 seconds
+Iteration 9: 0.184 seconds
+Iteration 10: 0.185 seconds
+30000 Bodies: average 4.886 Billion Interactions / second
+Total time: 1.658
+
+========================================
+Iteration 4 Output:
+Available threads: 56
+Iteration 1: 0.190 seconds
+Iteration 2: 0.187 seconds
+Iteration 3: 0.187 seconds
+Iteration 4: 0.185 seconds
+Iteration 5: 0.184 seconds
+Iteration 6: 0.185 seconds
+Iteration 7: 0.188 seconds
+Iteration 8: 0.190 seconds
+Iteration 9: 0.184 seconds
+Iteration 10: 0.184 seconds
+30000 Bodies: average 4.838 Billion Interactions / second
+Total time: 1.674
+
+========================================
+Iteration 5 Output:
+Available threads: 56
+Iteration 1: 0.185 seconds
+Iteration 2: 0.185 seconds
+Iteration 3: 0.184 seconds
+Iteration 4: 0.190 seconds
+Iteration 5: 0.191 seconds
+Iteration 6: 0.184 seconds
+Iteration 7: 0.184 seconds
+Iteration 8: 0.184 seconds
+Iteration 9: 0.184 seconds
+Iteration 10: 0.188 seconds
+30000 Bodies: average 4.836 Billion Interactions / second
+Total time: 1.675
+
+========================================
+Iteration 6 Output:
+Available threads: 56
+Iteration 1: 0.186 seconds
+Iteration 2: 0.184 seconds
+Iteration 3: 0.184 seconds
+Iteration 4: 0.184 seconds
+Iteration 5: 0.185 seconds
+Iteration 6: 0.184 seconds
+Iteration 7: 0.184 seconds
+Iteration 8: 0.185 seconds
+Iteration 9: 0.185 seconds
+Iteration 10: 0.184 seconds
+30000 Bodies: average 4.878 Billion Interactions / second
+Total time: 1.660
+
+========================================
+Iteration 7 Output:
+Available threads: 56
+Iteration 1: 0.185 seconds
+Iteration 2: 0.184 seconds
+Iteration 3: 0.184 seconds
+Iteration 4: 0.185 seconds
+Iteration 5: 0.185 seconds
+Iteration 6: 0.184 seconds
+Iteration 7: 0.185 seconds
+Iteration 8: 0.184 seconds
+Iteration 9: 0.185 seconds
+Iteration 10: 0.184 seconds
+30000 Bodies: average 4.878 Billion Interactions / second
+Total time: 1.661
+
+========================================
