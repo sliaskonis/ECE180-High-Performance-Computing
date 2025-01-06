@@ -24,7 +24,7 @@ Then start the simulation using:
 This repository also contains some useful scripts for testing/profiling each implementation.
 
 ### **Test All Script**
-The `test_all.py` script is designed to test various implementations of a specific algorithm. The script supports serial, OpenMP, CUDA, or all implementations, and provides options for configuring the number of iterations and saving final coordinates. When executing the script, the specified implementation will be executed <iterations> number of times and its output will be saved to a text file under the results directory. The saved file contains information such as the execution time of each iteration and the average number of interactions per second for all bodies.
+The `test_all.py` script is designed to test various implementations of a specific algorithm. The script supports serial, OpenMP, CUDA, or all implementations, and provides options for configuring the number of iterations and saving final coordinates. When executing the script, the specified implementation will be executed `<iterations>` number of times and its output will be saved to a text file under the results directory. The saved file contains information such as the execution time of each iteration and the average number of interactions per second for all bodies.
 
 ## **Usage**
 
