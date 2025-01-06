@@ -1,0 +1,18 @@
+Iteration 1 Output:
+Available threads: 8
+Iteration 1: 5.014 seconds
+Iteration 2: 5.018 seconds
+Iteration 3: 5.032 seconds
+Iteration 4: 5.017 seconds
+Iteration 5: 5.034 seconds
+Iteration 6: 5.003 seconds
+Iteration 7: 5.000 seconds
+Iteration 8: 5.001 seconds
+Iteration 9: 5.000 seconds
+Iteration 10: 4.999 seconds
+65536 Bodies: average 0.857 Billion Interactions / second
+Total time: 45.104
+Writing final coordinates to openmp_coordinates_65536.txt
+Data written successfully
+
+========================================

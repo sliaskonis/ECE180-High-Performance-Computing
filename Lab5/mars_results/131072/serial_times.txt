@@ -1,0 +1,17 @@
+Iteration 1 Output:
+Iteration 1: 84.933 seconds
+Iteration 2: 84.788 seconds
+Iteration 3: 84.874 seconds
+Iteration 4: 85.519 seconds
+Iteration 5: 85.136 seconds
+Iteration 6: 85.113 seconds
+Iteration 7: 85.201 seconds
+Iteration 8: 85.443 seconds
+Iteration 9: 88.289 seconds
+Iteration 10: 85.300 seconds
+131072 Bodies: average 0.201 Billion Interactions / second
+Total time: 769.663
+Writing final coordinates to serial_coordinates_131072.txt
+Data written successfully
+
+========================================
