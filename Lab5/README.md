@@ -26,7 +26,7 @@ This repository also contains some useful scripts for testing/profiling each imp
 ### **Test All Script**
 The `test_all.py` script is designed to test various implementations of a specific algorithm. The script supports serial, OpenMP, CUDA, or all implementations, and provides options for configuring the number of iterations and saving final coordinates. When executing the script, the specified implementation will be executed for `<iterations>` number of times and its output will be saved to a text file under the results directory. The saved file contains information such as the execution time of each iteration and the average number of interactions per second for all bodies. These output files can be used by the `getGraphs.py` script in order to create comparison graphs between different implementations.
 
-## *Usage*
+#### **Usage**
 
 Run the script from the command line with the following syntax:
 
@@ -44,3 +44,5 @@ python3 test_all.py <implementation> <iterations> <save_final_coordinates>
 3. Save final coordinates:
     - true: Save the final coordinates to a file
     - false: Do not save the final coordinates
+
+### **Get Graphs Script**
