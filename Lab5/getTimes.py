@@ -2,18 +2,25 @@ import subprocess
 import sys
 import os
 
-if len(sys.argv) != 4:
-    print("Usage: python getTimes.py <implementation> <iterations> <num_particles>")
+if len(sys.argv) != 5:
+    print("Usage: python getTimes.py <implementation> <iterations> <num_particles> <save_final_coordinates>")
     print("  <implementation> = serial | openmp | cuda")
+    print("  <save_final_coordinates> = true | false")
     exit(1)
 
+# Define implementation types
 implType = {
     "serial": "src/src_orig",
     "openmp": "src/src_openmp",
     "cuda": "src/src_cuda"
 }
 
-# Define the directory containing the Makefile and executable
+# Define command for compilation 
+make_command = ["make"]
+if len(sys.argv) > 2 and sys.argv[4] == "true":
+    make_command.append("SAVE_FINAL_COORDINATES=1")
+
+# Define the directory for the executable
 src_dir = implType.get(sys.argv[1])
 nbody_executable = os.path.join(src_dir, "nbody")
 
@@ -29,7 +36,7 @@ os.makedirs(num_particles_dir, exist_ok=True)
 
 try:
     print(f"Compiling {nbody_executable}...")
-    subprocess.run(["make",  "SAVE_FINAL_COORDINATES=1"], cwd=src_dir, check=True)
+    subprocess.run(make_command, cwd=src_dir, check=True)
     print("Compile successful.")
 except subprocess.CalledProcessError as e:
     print(f"Error during 'make': {e}")

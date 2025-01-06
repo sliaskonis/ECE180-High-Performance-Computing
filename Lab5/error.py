@@ -1,5 +1,6 @@
 import math
 import sys
+import re
 from decimal import Decimal
 
 # Define the file name
@@ -24,26 +25,29 @@ def find_error_degree(num1, num2):
         max_error = err
     return err
 
-# Open the file and read its lines
-with open(filename, 'r') as file:
-    for line in file:
-        # Split the line into two numbers and convert them to floats
-        num1, num2 = line.strip().split()
-        num1 = Decimal(num1)
-        num2 = Decimal(num2)
-        #print(num1,", ", num2)
-        # Compare the numbers and increment errors if they are the same
-        if num1 == num2:
-            error_degrees.append("same")  # For numbers that are identical
-            continue
-        else:
-            errors += 1
+# Find the correct golden output file for comparison based on the number of particles
+match = re.search(r'\d+', filename)
+number = match.group()
+golden_filename = f"final_coordinates/golden/golden_coordinates_{number}.txt"
 
-        # Find the degree of the error and store it in error_degrees
-        if num1 != num2:
-            error_degrees.append(find_error_degree(num1, num2))
-        # else:
-        #     error_degrees.append("same")  # For numbers that are identical
+# Open the file and read its lines
+with open(filename, 'r') as file1:
+    with open(golden_filename, 'r') as file2:
+        for line1,line2 in zip(file1,file2):
+            # Split the line into two numbers and convert them to floats
+            num1 = line1.strip()
+            num2 = line2.strip()
+            num1 = Decimal(num1)
+            num2 = Decimal(num2)
+
+            # Compare the numbers and increment errors if they are the same
+            if num1 == num2:
+                error_degrees.append("same")  # For numbers that are identical
+                continue
+            else:
+                error_degree = (find_error_degree(num1, num2))
+                if error_degree < 2:
+                    errors += 1
 
 # Print the results
 print(f"Number of errors : {errors}")

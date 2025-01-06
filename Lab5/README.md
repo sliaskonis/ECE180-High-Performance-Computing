@@ -46,3 +46,29 @@ python3 test_all.py <implementation> <iterations> <save_final_coordinates>
     - false: Do not save the final coordinates
 
 ### **Get Graphs Script**
+
+The `getGraphs.py` script can be used in order to get a comparison graph between all different implementations. 
+
+#### **Usage**
+
+Run the script from the command line with the following syntax:
+
+```bash
+python3 getGraphs.py <results dir>
+```
+
+The results dir should have the following structure:
+
+Project/
+├── results/
+│   ├── 30000
+│   ├── 65536
+│   └── 131072
+        ├── serial_times.txt
+│       ├── openmp_times.txt
+│       └── cuda_times.txt 
+├── src/ 
+
+Inside the results directory, each number in the name of the subdirectories represents the number of particles used for the execution of the implementations and inside these directories there are three files, one for each implementation, containing the corresponding statistics (time, iteractions).
+
+Such directory can be created by the `test_all.py` script when being executed for all implementations.
