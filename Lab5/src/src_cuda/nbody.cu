@@ -94,9 +94,11 @@ int main(const int argc, const char** argv) {
 	bodies.x  = (float *)malloc(sizeof(float)*nBodies);
 	bodies.y  = (float *)malloc(sizeof(float)*nBodies);
 	bodies.z  = (float *)malloc(sizeof(float)*nBodies);
+
 	bodies.vx = (float *)malloc(sizeof(float)*nBodies);
 	bodies.vy = (float *)malloc(sizeof(float)*nBodies);
 	bodies.vz = (float *)malloc(sizeof(float)*nBodies);
+	
 	bodies.fx = (float *)malloc(sizeof(float)*nBodies);
 	bodies.fy = (float *)malloc(sizeof(float)*nBodies);
 	bodies.fz = (float *)malloc(sizeof(float)*nBodies);
@@ -140,9 +142,11 @@ int main(const int argc, const char** argv) {
 	cudaMalloc((void **) &d_bodies.x,  sizeof(float) * nBodies);
 	cudaMalloc((void **) &d_bodies.y,  sizeof(float) * nBodies);
 	cudaMalloc((void **) &d_bodies.z,  sizeof(float) * nBodies);
+
 	cudaMalloc((void **) &d_bodies.vx, sizeof(float) * nBodies);
 	cudaMalloc((void **) &d_bodies.vy, sizeof(float) * nBodies);
 	cudaMalloc((void **) &d_bodies.vz, sizeof(float) * nBodies);
+
 	cudaMalloc((void **) &d_bodies.fx, sizeof(float) * nBodies);
 	cudaMalloc((void **) &d_bodies.fy, sizeof(float) * nBodies);
 	cudaMalloc((void **) &d_bodies.fz, sizeof(float) * nBodies);
@@ -151,6 +155,7 @@ int main(const int argc, const char** argv) {
 	cudaMemcpy(d_bodies.x,  bodies.x,  sizeof(float) * nBodies, cudaMemcpyHostToDevice);
 	cudaMemcpy(d_bodies.y,  bodies.y,  sizeof(float) * nBodies, cudaMemcpyHostToDevice);
 	cudaMemcpy(d_bodies.z,  bodies.z,  sizeof(float) * nBodies, cudaMemcpyHostToDevice);
+
 	cudaMemcpy(d_bodies.vx, bodies.vx, sizeof(float) * nBodies, cudaMemcpyHostToDevice);
 	cudaMemcpy(d_bodies.vy, bodies.vy, sizeof(float) * nBodies, cudaMemcpyHostToDevice);
 	cudaMemcpy(d_bodies.vz, bodies.vz, sizeof(float) * nBodies, cudaMemcpyHostToDevice);
