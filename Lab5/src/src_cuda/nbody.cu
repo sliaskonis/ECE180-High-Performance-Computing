@@ -105,9 +105,9 @@ int main(const int argc, const char** argv) {
   	randomizeBodies(buf, 9*nBodies); // Init pos / vel data
 
 	// Set geometry
-	dim3 block(1024, 1, 1);
-	dim3 grid(ceil(nBodies/1024), 1, 1);
-	int tiles = (int)ceil(nBodies/1024);
+	dim3 block(THREADS_PER_BLOCK, 1, 1);
+	dim3 grid(ceil(nBodies/THREADS_PER_BLOCK), 1, 1);
+	int tiles = (int)ceil(nBodies/THREADS_PER_BLOCK);
 
 	/****************************** Data transfers ******************************/
 	cudaMalloc((void **) &d_buf, bytes);
