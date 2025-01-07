@@ -1,0 +1,105 @@
+Iteration 1 Output:
+Iteration 1: 0.448 seconds
+Iteration 2: 0.458 seconds
+Iteration 3: 0.458 seconds
+Iteration 4: 0.457 seconds
+Iteration 5: 0.454 seconds
+Iteration 6: 0.452 seconds
+Iteration 7: 0.453 seconds
+Iteration 8: 0.454 seconds
+Iteration 9: 0.454 seconds
+Iteration 10: 0.457 seconds
+65536 Bodies: average 9.435 Billion Interactions / second
+Total time: 4.097
+
+========================================
+Iteration 2 Output:
+Iteration 1: 0.456 seconds
+Iteration 2: 0.456 seconds
+Iteration 3: 0.459 seconds
+Iteration 4: 0.457 seconds
+Iteration 5: 0.452 seconds
+Iteration 6: 0.458 seconds
+Iteration 7: 0.459 seconds
+Iteration 8: 0.458 seconds
+Iteration 9: 0.455 seconds
+Iteration 10: 0.460 seconds
+65536 Bodies: average 9.397 Billion Interactions / second
+Total time: 4.113
+
+========================================
+Iteration 3 Output:
+Iteration 1: 0.457 seconds
+Iteration 2: 0.457 seconds
+Iteration 3: 0.460 seconds
+Iteration 4: 0.461 seconds
+Iteration 5: 0.457 seconds
+Iteration 6: 0.459 seconds
+Iteration 7: 0.459 seconds
+Iteration 8: 0.459 seconds
+Iteration 9: 0.459 seconds
+Iteration 10: 0.460 seconds
+65536 Bodies: average 9.359 Billion Interactions / second
+Total time: 4.130
+
+========================================
+Iteration 4 Output:
+Iteration 1: 0.458 seconds
+Iteration 2: 0.460 seconds
+Iteration 3: 0.458 seconds
+Iteration 4: 0.459 seconds
+Iteration 5: 0.460 seconds
+Iteration 6: 0.457 seconds
+Iteration 7: 0.463 seconds
+Iteration 8: 0.459 seconds
+Iteration 9: 0.460 seconds
+Iteration 10: 0.458 seconds
+65536 Bodies: average 9.349 Billion Interactions / second
+Total time: 4.134
+
+========================================
+Iteration 5 Output:
+Iteration 1: 0.461 seconds
+Iteration 2: 0.461 seconds
+Iteration 3: 0.459 seconds
+Iteration 4: 0.460 seconds
+Iteration 5: 0.460 seconds
+Iteration 6: 0.462 seconds
+Iteration 7: 0.459 seconds
+Iteration 8: 0.457 seconds
+Iteration 9: 0.460 seconds
+Iteration 10: 0.460 seconds
+65536 Bodies: average 9.342 Billion Interactions / second
+Total time: 4.138
+
+========================================
+Iteration 6 Output:
+Iteration 1: 0.458 seconds
+Iteration 2: 0.458 seconds
+Iteration 3: 0.458 seconds
+Iteration 4: 0.457 seconds
+Iteration 5: 0.458 seconds
+Iteration 6: 0.458 seconds
+Iteration 7: 0.458 seconds
+Iteration 8: 0.458 seconds
+Iteration 9: 0.458 seconds
+Iteration 10: 0.458 seconds
+65536 Bodies: average 9.386 Billion Interactions / second
+Total time: 4.118
+
+========================================
+Iteration 7 Output:
+Iteration 1: 0.457 seconds
+Iteration 2: 0.461 seconds
+Iteration 3: 0.459 seconds
+Iteration 4: 0.460 seconds
+Iteration 5: 0.458 seconds
+Iteration 6: 0.457 seconds
+Iteration 7: 0.458 seconds
+Iteration 8: 0.458 seconds
+Iteration 9: 0.460 seconds
+Iteration 10: 0.459 seconds
+65536 Bodies: average 9.362 Billion Interactions / second
+Total time: 4.129
+
+========================================
