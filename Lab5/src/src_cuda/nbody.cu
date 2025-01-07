@@ -33,7 +33,9 @@ __global__ void forceComputeKernel(Body *p, int n) {
 	int tid = threadIdx.x + blockIdx.x*blockDim.x;
 	
 	float dx, dy, dz;
-	float distSqr, invDist, invDist3;
+    float distSqr __attribute__((unused));
+    float invDist __attribute__((unused));
+    float invDist3 __attribute__((unused));
 	p[tid].Fx = 0.0f;
 	p[tid].Fy = 0.0f;
 	p[tid].Fz = 0.0f;
@@ -42,9 +44,9 @@ __global__ void forceComputeKernel(Body *p, int n) {
 		dx = p[i].x - p[tid].x;
 		dy = p[i].y - p[tid].y;
 		dz = p[i].z - p[tid].z;
-		float distSqr = dx*dx + dy*dy + dz*dz + SOFTENING;
-		float invDist = 1.0f / sqrtf(distSqr);
-		float invDist3 = invDist * invDist * invDist;
+		distSqr = dx*dx + dy*dy + dz*dz + SOFTENING;
+		invDist = 1.0f / sqrtf(distSqr);
+		invDist3 = invDist * invDist * invDist;
 
 		p[tid].Fx += dx * invDist3; p[tid].Fy += dy * invDist3; p[tid].Fz += dz * invDist3;
 	}
