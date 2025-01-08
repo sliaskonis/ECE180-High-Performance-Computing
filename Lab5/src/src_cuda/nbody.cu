@@ -4,6 +4,7 @@
 #include "timer.h"
 
 #define SOFTENING 1e-9f  /* Will guard against denormals */
+#define THREADS_PER_BLOCK 1024
 
 // Structure of arrays 
 typedef struct { 
@@ -44,7 +45,6 @@ __global__ void forceComputeKernel(Body p, int n) {
 	int tid = threadIdx.x + blockIdx.x*blockDim.x;
 	
 	float dx, dy, dz;
-	float distSqr, invDist, invDist3;
 	p.fx[tid] = 0.0f;
 	p.fy[tid] = 0.0f;
 	p.fz[tid] = 0.0f;
@@ -108,34 +108,9 @@ int main(const int argc, const char** argv) {
 
   	randomizeBodies(&bodies, nBodies); // Init pos / vel data
 
-	  #ifdef SAVE_FINAL_COORDINATES
-	  /****************************** Save Final Coordinates ******************************/
-	  char filename2[256];
-  
-	  sprintf(filename2, "cuda_coordinates_first_%d.txt", nBodies);
-  
-	  printf("Writing final coordinates to %s\n", filename2);
-	  FILE *fd1 = fopen(filename2, "w");
-  
-	  if (!fd1) {
-		  perror("Failed opening file");
-		  return -1;
-	  }
-  
-	  for (int i = 0; i < nBodies; i++) {
-		  fprintf(fd1, "%f\n", bodies.x[i]);
-		  fprintf(fd1, "%f\n", bodies.y[i]);
-		  fprintf(fd1, "%f\n", bodies.z[i]);
-	  }
-  
-	  fclose(fd1);
-  
-	  printf("Data written successfully\n");
-  #endif
-
 	// Set geometry
-	dim3 block(1024, 1, 1);
-	dim3 grid(ceil(nBodies/1024), 1, 1);
+	dim3 block(THREADS_PER_BLOCK, 1, 1);
+	dim3 grid(ceil(nBodies/THREADS_PER_BLOCK), 1, 1);
 
 	/****************************** Device Memory Allocation ******************************/
 	cudaMalloc((void **) &d_bodies,    sizeof(Body));
