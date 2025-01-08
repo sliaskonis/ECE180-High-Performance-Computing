@@ -39,7 +39,7 @@ __global__ void bodyForce(Body *p, float dt, int tiles, int n) {
 	Body curr_body = p[tid];
 
 	for (tile = 0; tile < tiles; tile++) {
-		private_bodies[threadIdx.x] = p[threadIdx.x + tile*blockDim.x];
+		private_bodies[threadIdx.x] = p[threadIdx.x + tile * blockDim.x];
 		__syncthreads();
 		for (int i = 0; i < THREADS_PER_BLOCK; i++) {
 			dx = private_bodies[i].x - curr_body.x;
@@ -49,12 +49,31 @@ __global__ void bodyForce(Body *p, float dt, int tiles, int n) {
 			invDist = 1.0f / sqrtf(distSqr);
 			invDist3 = invDist * invDist * invDist;
 
-			Fx += dx * invDist3; 
+			Fx += dx * invDist3;
 			Fy += dy * invDist3; 
 			Fz += dz * invDist3;
 		}
 		__syncthreads();
 	}
+
+	// // Load last tile into shared memory
+	// private_bodies[threadIdx.x] = p[threadIdx.x + (tiles-1) * blockDim.x];
+	// __syncthreads();
+
+	// int last_bodies = (n%THREADS_PER_BLOCK == 0) ? THREADS_PER_BLOCK : (THREADS_PER_BLOCK - n%THREADS_PER_BLOCK);
+
+	// for (int j = 0; j < last_bodies; j++) {
+	// 	dx = private_bodies[j].x - curr_body.x;
+	// 	dy = private_bodies[j].y - curr_body.y;
+	// 	dz = private_bodies[j].z - curr_body.z;
+	// 	distSqr = dx*dx + dy*dy + dz*dz + SOFTENING;
+	// 	invDist = 1.0f / sqrtf(distSqr);
+	// 	invDist3 = invDist * invDist * invDist;
+
+	// 	Fx += dx * invDist3;
+	// 	Fy += dy * invDist3; 
+	// 	Fz += dz * invDist3;
+	// }
 
     curr_body.vx += dt*Fx;
 	curr_body.vy += dt*Fy;
