@@ -25,8 +25,9 @@ void randomizeBodies(float *data, int n) {
 }
 
 /***************** KERNEL CODE *****************/
-__global__ void bodyForce(Body *p, float dt, int n) {
+__global__ void bodyForce(Body *p, float dt, int tiles, int n) {
 	int tid = threadIdx.x + blockIdx.x*blockDim.x;
+	int tile;
 
 	float dx, dy, dz;
 	float distSqr, invDist, invDist3;
@@ -34,22 +35,33 @@ __global__ void bodyForce(Body *p, float dt, int n) {
 	float Fy = 0.0f;
 	float Fz = 0.0f;
 
-	for (int i = 0; i < n; i++) {
-		dx = p[i].x - p[tid].x;
-		dy = p[i].y - p[tid].y;
-		dz = p[i].z - p[tid].z;
-		distSqr = dx*dx + dy*dy + dz*dz + SOFTENING;
-		invDist = 1.0f / sqrtf(distSqr);
-		invDist3 = invDist * invDist * invDist;
+	__shared__ Body private_bodies[THREADS_PER_BLOCK];
+	Body curr_body = p[tid];
 
-		Fx += dx * invDist3; 
-        Fy += dy * invDist3; 
-        Fz += dz * invDist3;
+	for (tile = 0; tile < tiles; tile++) {
+		private_bodies[threadIdx.x] = p[threadIdx.x + tile*blockDim.x];
+		__syncthreads();
+		for (int i = 0; i < THREADS_PER_BLOCK; i++) {
+			dx = private_bodies[i].x - curr_body.x;
+			dy = private_bodies[i].y - curr_body.y;
+			dz = private_bodies[i].z - curr_body.z;
+			distSqr = dx*dx + dy*dy + dz*dz + SOFTENING;
+			invDist = 1.0f / sqrtf(distSqr);
+			invDist3 = invDist * invDist * invDist;
+
+			Fx += dx * invDist3; 
+			Fy += dy * invDist3; 
+			Fz += dz * invDist3;
+		}
+		__syncthreads();
 	}
 
-    p[tid].vx += dt*Fx;
-	p[tid].vy += dt*Fy;
-	p[tid].vz += dt*Fz;
+    curr_body.vx += dt*Fx;
+	curr_body.vy += dt*Fy;
+	curr_body.vz += dt*Fz;
+
+	// Update global memory
+	p[tid] = curr_body;
 }
 
 int main(const int argc, const char** argv) {
@@ -75,6 +87,7 @@ int main(const int argc, const char** argv) {
 	// Set geometry
 	dim3 block(THREADS_PER_BLOCK, 1, 1);
 	dim3 grid((int)(ceil(nBodies/THREADS_PER_BLOCK)), 1, 1);
+	int tiles = (int)(ceil(nBodies/THREADS_PER_BLOCK));
 
 	/****************************** Data transfers ******************************/
 	cudaMalloc((void **) &d_buf, bytes);
@@ -86,7 +99,7 @@ int main(const int argc, const char** argv) {
   	for (int iter = 1; iter <= nIters; iter++) {
 		cudaEventRecord(iter_start, 0);
 		
-		bodyForce<<<grid, block>>>(d_p, dt, nBodies);
+		bodyForce<<<grid, block>>>(d_p, dt, tiles, nBodies);
 		checkCudaError("bodyForce");
         cudaDeviceSynchronize();
 
