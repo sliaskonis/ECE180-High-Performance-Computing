@@ -91,13 +91,15 @@ int main(const int argc, const char** argv) {
 
 	/****************************** Data transfers ******************************/
 	cudaMalloc((void **) &d_buf, bytes);
-	cudaMemcpy(d_buf, buf, bytes, cudaMemcpyHostToDevice);
 
 	d_p = (Body*)d_buf;
 
 	/****************************** Real Computation ******************************/
   	for (int iter = 1; iter <= nIters; iter++) {
 		cudaEventRecord(iter_start, 0);
+
+		// Tranfer new coordinates back to device for next computations
+		cudaMemcpy(d_buf, buf, bytes, cudaMemcpyHostToDevice);
 		
 		bodyForce<<<grid, block>>>(d_p, dt, tiles, nBodies);
 		checkCudaError("bodyForce");
@@ -106,14 +108,12 @@ int main(const int argc, const char** argv) {
         // Transfer data back to host in order to compute new coordinates
 	    cudaMemcpy(buf, d_buf, bytes, cudaMemcpyDeviceToHost);
 
-        for (int i = 0 ; i < nBodies; i++) { // integrate position
+		// Calculate new coordinates
+        for (int i = 0 ; i < nBodies; i++) {
             p[i].x += p[i].vx*dt;
             p[i].y += p[i].vy*dt;
             p[i].z += p[i].vz*dt;
         }
-
-        // Tranfer new coordinates back to device for next computations
-	    cudaMemcpy(d_buf, buf, bytes, cudaMemcpyHostToDevice);
 
         cudaEventRecord(iter_end, 0);
 		cudaEventSynchronize(iter_end);
@@ -129,7 +129,6 @@ int main(const int argc, const char** argv) {
 
 	/****************************** Data transfers ******************************/
 	cudaMemcpy(buf, d_buf, bytes, cudaMemcpyDeviceToHost);
-	cudaFree(d_buf);
 
   	printf("%d Bodies: average %0.3f Billion Interactions / second\n", nBodies, 1e-9 * nBodies * nBodies / avgTime);
 	printf("Total time: %.3f\n", totalTime);
@@ -159,6 +158,8 @@ int main(const int argc, const char** argv) {
 	printf("Data written successfully\n");
 #endif
 	
+	/****************************** Cleanup ******************************/
+	cudaFree(d_buf);
 	free(buf);
 	
 	cudaDeviceReset();
