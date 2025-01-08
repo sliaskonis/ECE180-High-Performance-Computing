@@ -113,28 +113,32 @@ int main(const int argc, const char** argv) {
 	cudaMalloc((void **) &d_bodies.vy, bytes);
 	cudaMalloc((void **) &d_bodies.vz, bytes);
 
-	cudaMemcpy(d_bodies.x,  bodies.x,  bytes, cudaMemcpyHostToDevice);
-	cudaMemcpy(d_bodies.y,  bodies.y,  bytes, cudaMemcpyHostToDevice);
-	cudaMemcpy(d_bodies.z,  bodies.z,  bytes, cudaMemcpyHostToDevice);
-	cudaMemcpy(d_bodies.vx, bodies.vx, bytes, cudaMemcpyHostToDevice);
-	cudaMemcpy(d_bodies.vy, bodies.vy, bytes, cudaMemcpyHostToDevice);
-	cudaMemcpy(d_bodies.vz, bodies.vz, bytes, cudaMemcpyHostToDevice);
-
 	/****************************** Real Computation ******************************/
   	for (int iter = 1; iter <= nIters; iter++) {
 		cudaEventRecord(iter_start, 0);
-		
+
+		// In the first iteration both initial coordinates and velocity needs to be copied to device
+		if (iter == 1) {
+			cudaMemcpy(d_bodies.x,  bodies.x,  bytes, cudaMemcpyHostToDevice);
+			cudaMemcpy(d_bodies.y,  bodies.y,  bytes, cudaMemcpyHostToDevice);
+			cudaMemcpy(d_bodies.z,  bodies.z,  bytes, cudaMemcpyHostToDevice);
+
+			cudaMemcpy(d_bodies.vx, bodies.vx, bytes, cudaMemcpyHostToDevice);
+			cudaMemcpy(d_bodies.vy, bodies.vy, bytes, cudaMemcpyHostToDevice);
+			cudaMemcpy(d_bodies.vz, bodies.vz, bytes, cudaMemcpyHostToDevice);
+		}
+
 		bodyForce<<<grid, block>>>(d_bodies, dt, tiles, nBodies);
 		checkCudaError("bodyForce");
         cudaDeviceSynchronize();
 
-        // Transfer data back to host in order to compute new coordinates
+        // Transfer velocities calculated by the kernel back to host 
 	    cudaMemcpy(bodies.vx, d_bodies.vx, bytes, cudaMemcpyDeviceToHost);
 	    cudaMemcpy(bodies.vy, d_bodies.vy, bytes, cudaMemcpyDeviceToHost);
 	    cudaMemcpy(bodies.vz, d_bodies.vz, bytes, cudaMemcpyDeviceToHost);
 
-
-        for (int i = 0 ; i < nBodies; i++) { // integrate position
+		// Calculate new coordinates on host 
+        for (int i = 0 ; i < nBodies; i++) {
             bodies.x[i] += bodies.vx[i]*dt;
             bodies.y[i] += bodies.vy[i]*dt;
             bodies.z[i] += bodies.vz[i]*dt;
