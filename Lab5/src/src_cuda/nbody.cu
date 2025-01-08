@@ -4,6 +4,7 @@
 #include "timer.h"
 
 #define SOFTENING 1e-9f  /* Will guard against denormals */
+#define THREADS_PER_BLOCK 1024
 
 typedef struct { float x, y, z, vx, vy, vz;} Body;
 
@@ -28,9 +29,7 @@ __global__ void bodyForce(Body *p, float dt, int n) {
 	int tid = threadIdx.x + blockIdx.x*blockDim.x;
 
 	float dx, dy, dz;
-	float distSqr __attribute__((unused));
-    float invDist __attribute__((unused));
-    float invDist3 __attribute__((unused));
+	float distSqr, invDist, invDist3;
 	float Fx = 0.0f;
 	float Fy = 0.0f;
 	float Fz = 0.0f;
@@ -48,9 +47,9 @@ __global__ void bodyForce(Body *p, float dt, int n) {
         Fz += dz * invDist3;
 	}
 
-    p[tid].x += p[tid].vx*dt;
-	p[tid].y += p[tid].vy*dt;
-	p[tid].z += p[tid].vz*dt;
+    p[tid].vx += dt*Fx;
+	p[tid].vy += dt*Fy;
+	p[tid].vz += dt*Fz;
 }
 
 int main(const int argc, const char** argv) {
@@ -74,8 +73,8 @@ int main(const int argc, const char** argv) {
   	randomizeBodies(buf, 6*nBodies); // Init pos / vel data
 
 	// Set geometry
-	dim3 block(1024, 1, 1);
-	dim3 grid((int)(ceil(nBodies/1024)), 1, 1);
+	dim3 block(THREADS_PER_BLOCK, 1, 1);
+	dim3 grid((int)(ceil(nBodies/THREADS_PER_BLOCK)), 1, 1);
 
 	/****************************** Data transfers ******************************/
 	cudaMalloc((void **) &d_buf, bytes);
