@@ -38,7 +38,7 @@ __global__ void bodyForce(Body *p, float dt, int tiles, int n) {
 	__shared__ Body private_bodies[THREADS_PER_BLOCK];
 	Body curr_body = p[tid];
 
-	for (tile = 0; tile < tiles; tile++) {
+	for (tile = 0; tile < tiles-1; tile++) {
 		private_bodies[threadIdx.x] = p[threadIdx.x + tile * blockDim.x];
 		__syncthreads();
 		for (int i = 0; i < THREADS_PER_BLOCK; i++) {
@@ -56,24 +56,24 @@ __global__ void bodyForce(Body *p, float dt, int tiles, int n) {
 		__syncthreads();
 	}
 
-	// // Load last tile into shared memory
-	// private_bodies[threadIdx.x] = p[threadIdx.x + (tiles-1) * blockDim.x];
-	// __syncthreads();
+	// Load last tile into shared memory
+	private_bodies[threadIdx.x] = p[threadIdx.x + (tiles-1) * blockDim.x];
+	__syncthreads();
 
-	// int last_bodies = (n%THREADS_PER_BLOCK == 0) ? THREADS_PER_BLOCK : (THREADS_PER_BLOCK - n%THREADS_PER_BLOCK);
+	int last_bodies = (n%THREADS_PER_BLOCK == 0) ? THREADS_PER_BLOCK : (THREADS_PER_BLOCK - n%THREADS_PER_BLOCK);
 
-	// for (int j = 0; j < last_bodies; j++) {
-	// 	dx = private_bodies[j].x - curr_body.x;
-	// 	dy = private_bodies[j].y - curr_body.y;
-	// 	dz = private_bodies[j].z - curr_body.z;
-	// 	distSqr = dx*dx + dy*dy + dz*dz + SOFTENING;
-	// 	invDist = 1.0f / sqrtf(distSqr);
-	// 	invDist3 = invDist * invDist * invDist;
+	for (int j = 0; j < last_bodies; j++) {
+		dx = private_bodies[j].x - curr_body.x;
+		dy = private_bodies[j].y - curr_body.y;
+		dz = private_bodies[j].z - curr_body.z;
+		distSqr = dx*dx + dy*dy + dz*dz + SOFTENING;
+		invDist = 1.0f / sqrtf(distSqr);
+		invDist3 = invDist * invDist * invDist;
 
-	// 	Fx += dx * invDist3;
-	// 	Fy += dy * invDist3; 
-	// 	Fz += dz * invDist3;
-	// }
+		Fx += dx * invDist3;
+		Fy += dy * invDist3; 
+		Fz += dz * invDist3;
+	}
 
     curr_body.vx += dt*Fx;
 	curr_body.vy += dt*Fy;
@@ -117,9 +117,11 @@ int main(const int argc, const char** argv) {
   	for (int iter = 1; iter <= nIters; iter++) {
 		cudaEventRecord(iter_start, 0);
 
-		// Tranfer new coordinates back to device for next computations
-		cudaMemcpy(d_buf, buf, bytes, cudaMemcpyHostToDevice);
-		
+		// Transfer initial coordinates for the first iteration
+		if (iter == 1) {
+			cudaMemcpy(d_buf, buf, bytes, cudaMemcpyHostToDevice);
+		}
+
 		bodyForce<<<grid, block>>>(d_p, dt, tiles, nBodies);
 		checkCudaError("bodyForce");
         cudaDeviceSynchronize();
@@ -133,6 +135,9 @@ int main(const int argc, const char** argv) {
             p[i].y += p[i].vy*dt;
             p[i].z += p[i].vz*dt;
         }
+
+		// Transfer new coordinates back to device for next computation
+		cudaMemcpy(d_buf, buf, bytes, cudaMemcpyHostToDevice);
 
         cudaEventRecord(iter_end, 0);
 		cudaEventSynchronize(iter_end);
