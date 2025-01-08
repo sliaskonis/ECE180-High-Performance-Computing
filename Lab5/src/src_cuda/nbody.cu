@@ -53,6 +53,7 @@ __global__ void bodyForce(Body p, float dt, int tiles, int n) {
 		body_coordinates_z[threadIdx.x] = p.z[threadIdx.x + tile*blockDim.x];
 
 		__syncthreads();
+		#pragma unroll 16
 		for (int i = 0; i < THREADS_PER_BLOCK; i++) {
 			dx = body_coordinates_x[i] - curr_x;
 			dy = body_coordinates_y[i] - curr_y;
