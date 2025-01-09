@@ -60,7 +60,7 @@ __global__ void bodyForce(Body *p, float dt, int tiles, int n) {
 	private_bodies[threadIdx.x] = p[threadIdx.x + (tiles-1) * blockDim.x];
 	__syncthreads();
 
-	int last_bodies = (n%THREADS_PER_BLOCK == 0) ? THREADS_PER_BLOCK : (THREADS_PER_BLOCK - n%THREADS_PER_BLOCK);
+	int last_bodies = (n%THREADS_PER_BLOCK == 0) ? THREADS_PER_BLOCK : n%THREADS_PER_BLOCK;
 
 	for (int j = 0; j < last_bodies; j++) {
 		dx = private_bodies[j].x - curr_body.x;
