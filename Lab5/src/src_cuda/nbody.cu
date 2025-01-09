@@ -74,7 +74,7 @@ int main(const int argc, const char** argv) {
 
 	// Set geometry
 	dim3 block(THREADS_PER_BLOCK, 1, 1);
-	dim3 grid((int)(ceil(nBodies/THREADS_PER_BLOCK)), 1, 1);
+	dim3 grid((int)(ceil((float)nBodies/THREADS_PER_BLOCK)), 1, 1);
 
 	/****************************** Data transfers ******************************/
 	cudaMalloc((void **) &d_buf, bytes);
