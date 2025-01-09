@@ -74,6 +74,13 @@ __global__ void bodyForce(Body p, float dt, int tiles, int n) {
 	p.vz[tid] += dt*Fz;
 }
 
+__global__ void calculatePositions(Body p, float dt) {
+	int tid = threadIdx.x + blockIdx.x*blockDim.x;
+	p.x[tid] += p.vx[tid]*dt;
+	p.y[tid] += p.vy[tid]*dt;
+	p.z[tid] += p.vz[tid]*dt;
+}
+
 int main(const int argc, const char** argv) {
 
   	int nBodies = 30000;
@@ -133,22 +140,14 @@ int main(const int argc, const char** argv) {
 		checkCudaError("bodyForce");
         cudaDeviceSynchronize();
 
-        // Transfer velocities calculated by the kernel back to host 
-	    cudaMemcpy(bodies.vx, d_bodies.vx, bytes, cudaMemcpyDeviceToHost);
-	    cudaMemcpy(bodies.vy, d_bodies.vy, bytes, cudaMemcpyDeviceToHost);
-	    cudaMemcpy(bodies.vz, d_bodies.vz, bytes, cudaMemcpyDeviceToHost);
+		calculatePositions<<<grid, block>>>(d_bodies, dt);
 
-		// Calculate new coordinates on host 
-        for (int i = 0 ; i < nBodies; i++) {
-            bodies.x[i] += bodies.vx[i]*dt;
-            bodies.y[i] += bodies.vy[i]*dt;
-            bodies.z[i] += bodies.vz[i]*dt;
-        }
-
-        // Tranfer new coordinates back to device for next computations
-		cudaMemcpy(d_bodies.x, bodies.x, bytes, cudaMemcpyHostToDevice);
-	    cudaMemcpy(d_bodies.y, bodies.y, bytes, cudaMemcpyHostToDevice);
-	    cudaMemcpy(d_bodies.z, bodies.z, bytes, cudaMemcpyHostToDevice);
+		// Send final coordinates back to host
+		if (iter == nIters) {
+			cudaMemcpy(bodies.x, d_bodies.x, bytes, cudaMemcpyDeviceToHost);
+			cudaMemcpy(bodies.y, d_bodies.y, bytes, cudaMemcpyDeviceToHost);
+			cudaMemcpy(bodies.z, d_bodies.z, bytes, cudaMemcpyDeviceToHost);
+		}
 
         cudaEventRecord(iter_end, 0);
 		cudaEventSynchronize(iter_end);
