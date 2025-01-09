@@ -6,7 +6,10 @@
 #define SOFTENING 1e-9f  /* Will guard against denormals */
 #define THREADS_PER_BLOCK 1024
 
-typedef struct { float x, y, z, vx, vy, vz;} Body;
+typedef struct { 
+	float3 position;
+	float3 velocity;
+} Body;
 
 /****************************** Helper Functions ******************************/
 bool checkCudaError(const char *step) {
@@ -18,9 +21,15 @@ bool checkCudaError(const char *step) {
 	return false;
 }
 
-void randomizeBodies(float *data, int n) {
+void randomizeBodies(Body *bodies, int n) {
   	for (int i = 0; i < n; i++) {
-    	data[i] = 2.0f * (rand() / (float)RAND_MAX) - 1.0f;
+		bodies[i].position.x = 2.0f * (rand() / (float)RAND_MAX) - 1.0f;
+		bodies[i].position.y = 2.0f * (rand() / (float)RAND_MAX) - 1.0f;
+		bodies[i].position.z = 2.0f * (rand() / (float)RAND_MAX) - 1.0f;
+
+		bodies[i].velocity.x = 2.0f * (rand() / (float)RAND_MAX) - 1.0f;
+		bodies[i].velocity.y = 2.0f * (rand() / (float)RAND_MAX) - 1.0f;
+		bodies[i].velocity.z = 2.0f * (rand() / (float)RAND_MAX) - 1.0f;
   	}
 }
 
@@ -35,9 +44,9 @@ __global__ void bodyForce(Body *p, float dt, int n) {
 	float Fz = 0.0f;
 
 	for (int i = 0; i < n; i++) {
-		dx = p[i].x - p[tid].x;
-		dy = p[i].y - p[tid].y;
-		dz = p[i].z - p[tid].z;
+		dx = p[i].position.x - p[tid].position.x;
+		dy = p[i].position.y - p[tid].position.y;
+		dz = p[i].position.z - p[tid].position.z;
 		distSqr = dx*dx + dy*dy + dz*dz + SOFTENING;
 		invDist = 1.0f / sqrtf(distSqr);
 		invDist3 = invDist * invDist * invDist;
@@ -47,9 +56,9 @@ __global__ void bodyForce(Body *p, float dt, int n) {
         Fz += dz * invDist3;
 	}
 
-    p[tid].vx += dt*Fx;
-	p[tid].vy += dt*Fy;
-	p[tid].vz += dt*Fz;
+    p[tid].velocity.x += dt*Fx;
+	p[tid].velocity.y += dt*Fy;
+	p[tid].velocity.z += dt*Fz;
 }
 
 int main(const int argc, const char** argv) {
@@ -70,7 +79,7 @@ int main(const int argc, const char** argv) {
 	cudaEventCreate(&iter_start);
 	cudaEventCreate(&iter_end);
 
-  	randomizeBodies(buf, 6*nBodies); // Init pos / vel data
+  	randomizeBodies(p, nBodies); // Init pos / vel data
 
 	// Set geometry
 	dim3 block(THREADS_PER_BLOCK, 1, 1);
@@ -98,9 +107,9 @@ int main(const int argc, const char** argv) {
 	    cudaMemcpy(buf, d_buf, bytes, cudaMemcpyDeviceToHost);
 
         for (int i = 0 ; i < nBodies; i++) { // integrate position
-            p[i].x += p[i].vx*dt;
-            p[i].y += p[i].vy*dt;
-            p[i].z += p[i].vz*dt;
+            p[i].position.x += p[i].velocity.x*dt;
+            p[i].position.y += p[i].velocity.y*dt;
+            p[i].position.z += p[i].velocity.z*dt;
         }
 
         // Tranfer new coordinates back to device for next computations
@@ -136,9 +145,9 @@ int main(const int argc, const char** argv) {
 	}
 
 	for (int i = 0; i < nBodies; i++) {
-		fprintf(fd, "%f\n", p[i].x);
-		fprintf(fd, "%f\n", p[i].y);
-		fprintf(fd, "%f\n", p[i].z);
+		fprintf(fd, "%f\n", p[i].position.x);
+		fprintf(fd, "%f\n", p[i].position.y);
+		fprintf(fd, "%f\n", p[i].position.z);
 	}
 
 	fclose(fd);
