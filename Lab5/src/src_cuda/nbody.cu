@@ -88,7 +88,6 @@ __global__ void bodyForce(Body p, float dt, int tiles, int n) {
 		Fy += dy * invDist3; 
 		Fz += dz * invDist3;
 	}
-
     p.vx[tid] += dt*Fx;
 	p.vy[tid] += dt*Fy;
 	p.vz[tid] += dt*Fz;
