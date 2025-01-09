@@ -30,7 +30,7 @@ void randomizeBodies(Body *bodies, int n) {
 }
 
 /***************** KERNEL CODE *****************/
-__global__ void bodyForce(Body p, float dt, int tiles, int n) {
+__global__ void bodyForce(Body p, float dt, int n) {
 	int tid = threadIdx.x + blockIdx.x*blockDim.x;
 	int tile;
 
@@ -40,46 +40,10 @@ __global__ void bodyForce(Body p, float dt, int tiles, int n) {
 	float Fy = 0.0f;
 	float Fz = 0.0f;
 
-	__shared__ float body_coordinates_x[THREADS_PER_BLOCK];
-	__shared__ float body_coordinates_y[THREADS_PER_BLOCK];
-	__shared__ float body_coordinates_z[THREADS_PER_BLOCK];
-	float curr_x = p.x[tid];
-	float curr_y = p.y[tid];
-	float curr_z = p.z[tid];
-	
-	for (tile = 0; tile < tiles-1; tile++) {
-		body_coordinates_x[threadIdx.x] = p.x[threadIdx.x + tile*blockDim.x];
-		body_coordinates_y[threadIdx.x] = p.y[threadIdx.x + tile*blockDim.x];
-		body_coordinates_z[threadIdx.x] = p.z[threadIdx.x + tile*blockDim.x];
-
-		__syncthreads();
-		for (int i = 0; i < THREADS_PER_BLOCK; i++) {
-			dx = body_coordinates_x[i] - curr_x;
-			dy = body_coordinates_y[i] - curr_y;
-			dz = body_coordinates_z[i] - curr_z;
-			distSqr = dx*dx + dy*dy + dz*dz + SOFTENING;
-			invDist = 1.0f / sqrtf(distSqr);
-			invDist3 = invDist * invDist * invDist;
-
-			Fx += dx * invDist3; 
-			Fy += dy * invDist3; 
-			Fz += dz * invDist3;
-		}
-		__syncthreads();
-	}
-
-	// Load last tile into shared memory
-	body_coordinates_x[threadIdx.x] = p.x[threadIdx.x + (tiles-1)*blockDim.x];
-	body_coordinates_y[threadIdx.x] = p.y[threadIdx.x + (tiles-1)*blockDim.x];
-	body_coordinates_z[threadIdx.x] = p.z[threadIdx.x + (tiles-1)*blockDim.x];
-	__syncthreads();
-
-	int last_bodies = (n%THREADS_PER_BLOCK == 0) ? THREADS_PER_BLOCK : n%THREADS_PER_BLOCK;
-
-	for (int j = 0; j < last_bodies; j++) {
-		dx = body_coordinates_x[j] - curr_x;
-		dy = body_coordinates_y[j] - curr_y;
-		dz = body_coordinates_z[j] - curr_z;
+	for (int i = 0; i < n; i++) {
+		dx = p.x[i] - p.x[tid];
+		dy = p.y[i] - p.y[tid];
+		dz = p.z[i] - p.z[tid];
 		distSqr = dx*dx + dy*dy + dz*dz + SOFTENING;
 		invDist = 1.0f / sqrtf(distSqr);
 		invDist3 = invDist * invDist * invDist;
@@ -88,6 +52,7 @@ __global__ void bodyForce(Body p, float dt, int tiles, int n) {
 		Fy += dy * invDist3; 
 		Fz += dz * invDist3;
 	}
+
     p.vx[tid] += dt*Fx;
 	p.vy[tid] += dt*Fy;
 	p.vz[tid] += dt*Fz;
@@ -123,7 +88,6 @@ int main(const int argc, const char** argv) {
 	// Set geometry
 	dim3 block(THREADS_PER_BLOCK, 1, 1);
 	dim3 grid((int)(ceil((float)nBodies/THREADS_PER_BLOCK)), 1, 1);
-	int tiles = (int)(ceil((float)nBodies/THREADS_PER_BLOCK));
 
 	/****************************** Data transfers ******************************/
 	cudaMalloc((void **) &d_bodies.x, bytes);
@@ -148,7 +112,7 @@ int main(const int argc, const char** argv) {
 			cudaMemcpy(d_bodies.vz, bodies.vz, bytes, cudaMemcpyHostToDevice);
 		}
 
-		bodyForce<<<grid, block>>>(d_bodies, dt, tiles, nBodies);
+		bodyForce<<<grid, block>>>(d_bodies, dt, nBodies);
 		checkCudaError("bodyForce");
         cudaDeviceSynchronize();
 
