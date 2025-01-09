@@ -76,16 +76,20 @@ int main(const int argc, const char** argv) {
 	dim3 block(THREADS_PER_BLOCK, 1, 1);
 	dim3 grid((int)(ceil((float)nBodies/THREADS_PER_BLOCK)), 1, 1);
 
-	/****************************** Data transfers ******************************/
+	/****************************** Device Data Allocation ******************************/
 	cudaMalloc((void **) &d_buf, bytes);
-	cudaMemcpy(d_buf, buf, bytes, cudaMemcpyHostToDevice);
-
 	d_p = (Body*)d_buf;
 
 	/****************************** Real Computation ******************************/
   	for (int iter = 1; iter <= nIters; iter++) {
+
 		cudaEventRecord(iter_start, 0);
-		
+
+		// For the first iteration:	- Transfer initial coordinates to device
+		if (iter == 1) {
+			cudaMemcpy(d_buf, buf, bytes, cudaMemcpyHostToDevice);
+		}
+
 		bodyForce<<<grid, block>>>(d_p, dt, nBodies);
 		checkCudaError("bodyForce");
         cudaDeviceSynchronize();
@@ -113,10 +117,6 @@ int main(const int argc, const char** argv) {
   	}
 
   	float avgTime = totalTime / (float)(nIters-1);
-
-	/****************************** Data transfers ******************************/
-	cudaMemcpy(buf, d_buf, bytes, cudaMemcpyDeviceToHost);
-	cudaFree(d_buf);
 
   	printf("%d Bodies: average %0.3f Billion Interactions / second\n", nBodies, 1e-9 * nBodies * nBodies / avgTime);
 	printf("Total time: %.3f\n", totalTime);
@@ -146,6 +146,8 @@ int main(const int argc, const char** argv) {
 	printf("Data written successfully\n");
 #endif
 	
+	/****************************** Cleanup ******************************/
+	cudaFree(d_buf);
 	free(buf);
 	
 	cudaDeviceReset();
