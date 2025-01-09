@@ -47,7 +47,7 @@ __global__ void bodyForce(Body p, float dt, int tiles, int n) {
 	float curr_y = p.y[tid];
 	float curr_z = p.z[tid];
 	
-	for (tile = 0; tile < tiles; tile++) {
+	for (tile = 0; tile < tiles-1; tile++) {
 		body_coordinates_x[threadIdx.x] = p.x[threadIdx.x + tile*blockDim.x];
 		body_coordinates_y[threadIdx.x] = p.y[threadIdx.x + tile*blockDim.x];
 		body_coordinates_z[threadIdx.x] = p.z[threadIdx.x + tile*blockDim.x];
@@ -67,6 +67,28 @@ __global__ void bodyForce(Body p, float dt, int tiles, int n) {
 			Fz += dz * invDist3;
 		}
 		__syncthreads();
+	}
+
+	// Bring last tile into shared memory;
+	body_coordinates_x[threadIdx.x] = p.x[threadIdx.x + (tiles-1)*blockDim.x];
+	body_coordinates_y[threadIdx.x] = p.y[threadIdx.x + (tiles-1)*blockDim.x];
+	body_coordinates_z[threadIdx.x] = p.z[threadIdx.x + (tiles-1)*blockDim.x];
+	__syncthreads();
+
+	int last_bodies = (n%THREADS_PER_BLOCK == 0) ? THREADS_PER_BLOCK : n%THREADS_PER_BLOCK;
+
+	#pragma unroll 16
+	for (int i = 0; i < last_bodies; i++) {
+		dx = body_coordinates_x[i] - curr_x;
+		dy = body_coordinates_y[i] - curr_y;
+		dz = body_coordinates_z[i] - curr_z;
+		distSqr = dx*dx + dy*dy + dz*dz + SOFTENING;
+		invDist = 1.0f / sqrtf(distSqr);
+		invDist3 = invDist * invDist * invDist;
+
+		Fx += dx * invDist3; 
+		Fy += dy * invDist3; 
+		Fz += dz * invDist3;
 	}
 
     p.vx[tid] += dt*Fx;
@@ -110,8 +132,8 @@ int main(const int argc, const char** argv) {
 
 	// Set geometry
 	dim3 block(THREADS_PER_BLOCK, 1, 1);
-	dim3 grid((int)(ceil(nBodies/THREADS_PER_BLOCK)), 1, 1);
-	int tiles = (int)(ceil(nBodies/THREADS_PER_BLOCK));
+	dim3 grid((int)(ceil((float)nBodies/THREADS_PER_BLOCK)), 1, 1);
+	int tiles = (int)(ceil((float)nBodies/THREADS_PER_BLOCK));
 
 	/****************************** Data transfers ******************************/
 	cudaMalloc((void **) &d_bodies.x, bytes);
