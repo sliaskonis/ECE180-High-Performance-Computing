@@ -1,12 +1,13 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <cuda_fp16.h>
 #include "timer.h"
 
 #define SOFTENING 1e-9f  /* Will guard against denormals */
 #define THREADS_PER_BLOCK 1024
 
-typedef struct { float *x, *y, *z, *vx, *vy, *vz;} Body;
+typedef struct { __half *x, *y, *z, *vx, *vy, *vz;} Body;
 
 /****************************** Helper Functions ******************************/
 void checkCudaError(const char *step) {
@@ -20,12 +21,12 @@ void checkCudaError(const char *step) {
 
 void randomizeBodies(Body *bodies, int n) {
   	for (int i = 0; i < n; i++) {
-    	bodies->x[i] = 2.0f * (rand() / (float)RAND_MAX) - 1.0f;
-    	bodies->y[i] = 2.0f * (rand() / (float)RAND_MAX) - 1.0f;
-    	bodies->z[i] = 2.0f * (rand() / (float)RAND_MAX) - 1.0f;
-    	bodies->vx[i] = 2.0f * (rand() / (float)RAND_MAX) - 1.0f;
-    	bodies->vy[i] = 2.0f * (rand() / (float)RAND_MAX) - 1.0f;
-    	bodies->vz[i] = 2.0f * (rand() / (float)RAND_MAX) - 1.0f;
+    	bodies->x[i]  = __float2half(2.0f * (rand() / (float)RAND_MAX) - 1.0f);
+    	bodies->y[i]  = __float2half(2.0f * (rand() / (float)RAND_MAX) - 1.0f);
+    	bodies->z[i]  = __float2half(2.0f * (rand() / (float)RAND_MAX) - 1.0f);
+    	bodies->vx[i] = __float2half(2.0f * (rand() / (float)RAND_MAX) - 1.0f);
+    	bodies->vy[i] = __float2half(2.0f * (rand() / (float)RAND_MAX) - 1.0f);
+    	bodies->vz[i] = __float2half(2.0f * (rand() / (float)RAND_MAX) - 1.0f);
   	}
 }
 
@@ -40,12 +41,12 @@ __global__ void bodyForce(Body p, float dt, int tiles, int n) {
 	float Fy = 0.0f;
 	float Fz = 0.0f;
 
-	__shared__ float body_coordinates_x[THREADS_PER_BLOCK];
-	__shared__ float body_coordinates_y[THREADS_PER_BLOCK];
-	__shared__ float body_coordinates_z[THREADS_PER_BLOCK];
-	float curr_x = p.x[tid];
-	float curr_y = p.y[tid];
-	float curr_z = p.z[tid];
+	__shared__ __half body_coordinates_x[THREADS_PER_BLOCK];
+	__shared__ __half body_coordinates_y[THREADS_PER_BLOCK];
+	__shared__ __half body_coordinates_z[THREADS_PER_BLOCK];
+	__half curr_x = p.x[tid];
+	__half curr_y = p.y[tid];
+	__half curr_z = p.z[tid];
 	
 	for (tile = 0; tile < tiles-1; tile++) {
 		body_coordinates_x[threadIdx.x] = p.x[threadIdx.x + tile*blockDim.x];
@@ -55,9 +56,9 @@ __global__ void bodyForce(Body p, float dt, int tiles, int n) {
 		__syncthreads();
 		#pragma unroll 16
 		for (int i = 0; i < THREADS_PER_BLOCK; i++) {
-			dx = body_coordinates_x[i] - curr_x;
-			dy = body_coordinates_y[i] - curr_y;
-			dz = body_coordinates_z[i] - curr_z;
+			dx = __half2float(__hsub(body_coordinates_x[i], curr_x));
+			dy = __half2float(__hsub(body_coordinates_y[i], curr_y));
+			dz = __half2float(__hsub(body_coordinates_z[i], curr_z));
 			distSqr = dx*dx + dy*dy + dz*dz + SOFTENING;
 			invDist = 1.0f / sqrtf(distSqr);
 			invDist3 = invDist * invDist * invDist;
@@ -91,9 +92,9 @@ __global__ void bodyForce(Body p, float dt, int tiles, int n) {
 		Fz += dz * invDist3;
 	}
 
-    p.vx[tid] += dt*Fx;
-	p.vy[tid] += dt*Fy;
-	p.vz[tid] += dt*Fz;
+    p.vx[tid] = __hadd(p.vx[tid], __float2half(dt*Fx));
+	p.vy[tid] = __hadd(p.vy[tid], __float2half(dt*Fy));
+	p.vz[tid] = __hadd(p.vz[tid], __float2half(dt*Fz));
 }
 
 __global__ void calculatePositions(Body p, float dt, int n) {
@@ -102,9 +103,9 @@ __global__ void calculatePositions(Body p, float dt, int n) {
 		return;
 	}
 
-	p.x[tid] += p.vx[tid]*dt;
-	p.y[tid] += p.vy[tid]*dt;
-	p.z[tid] += p.vz[tid]*dt;
+	p.x[tid] += __hmul(p.vx[tid], __float2half(dt));
+	p.y[tid] += __hmul(p.vy[tid], __float2half(dt));
+	p.z[tid] += __hmul(p.vz[tid], __float2half(dt));
 }
 
 int main(const int argc, const char** argv) {
@@ -124,13 +125,13 @@ int main(const int argc, const char** argv) {
 	cudaEventCreate(&iter_end);
 
 	/****************************** Host memory allocation ******************************/
-	int bytes = sizeof(float)*nBodies;
-	bodies.x = (float *)malloc(bytes);
-	bodies.y = (float *)malloc(bytes);
-	bodies.z = (float *)malloc(bytes);
-	bodies.vx = (float *)malloc(bytes);
-	bodies.vy = (float *)malloc(bytes);
-	bodies.vz = (float *)malloc(bytes);
+	int bytes = sizeof(__half)*nBodies;
+	bodies.x =  (__half *)malloc(bytes);
+	bodies.y =  (__half *)malloc(bytes);
+	bodies.z =  (__half *)malloc(bytes);
+	bodies.vx = (__half *)malloc(bytes);
+	bodies.vy = (__half *)malloc(bytes);
+	bodies.vz = (__half *)malloc(bytes);
 
   	randomizeBodies(&bodies, nBodies); // Init pos / vel data
 
@@ -176,6 +177,36 @@ int main(const int argc, const char** argv) {
 			cudaMemcpy(bodies.z, d_bodies.z, bytes, cudaMemcpyDeviceToHost);
 		}
 
+		/****************************** Save Final Coordinates ******************************/
+		#ifdef SAVE_FINAL_COORDINATES
+		if (iter == 2) {
+			cudaMemcpy(bodies.x, d_bodies.x, bytes, cudaMemcpyDeviceToHost);
+			cudaMemcpy(bodies.y, d_bodies.y, bytes, cudaMemcpyDeviceToHost);
+			cudaMemcpy(bodies.z, d_bodies.z, bytes, cudaMemcpyDeviceToHost);
+			char filename[256];
+		
+			sprintf(filename, "cuda_coordinates_%d.txt", nBodies);
+		
+			printf("Writing final coordinates to %s\n", filename);
+			FILE *fd = fopen(filename, "w");
+		
+			if (!fd) {
+				perror("Failed opening file");
+				return -1;
+			}
+		
+			for (int i = 0; i < nBodies; i++) {
+				fprintf(fd, "%f\n", __half2float(bodies.x[i]));
+				fprintf(fd, "%f\n", __half2float(bodies.y[i]));
+				fprintf(fd, "%f\n", __half2float(bodies.z[i]));
+			}
+		
+			fclose(fd);
+		
+			printf("Data written successfully\n");
+		}
+		#endif
+
         cudaEventRecord(iter_end, 0);
 		cudaEventSynchronize(iter_end);
 
@@ -190,31 +221,6 @@ int main(const int argc, const char** argv) {
 
   	printf("%d Bodies: average %0.3f Billion Interactions / second\n", nBodies, 1e-9 * nBodies * nBodies / avgTime);
 	printf("Total time: %.3f\n", totalTime);
-
-#ifdef SAVE_FINAL_COORDINATES
-	/****************************** Save Final Coordinates ******************************/
-	char filename[256];
-
-	sprintf(filename, "cuda_coordinates_%d.txt", nBodies);
-
-	printf("Writing final coordinates to %s\n", filename);
-	FILE *fd = fopen(filename, "w");
-
-	if (!fd) {
-		perror("Failed opening file");
-		return -1;
-	}
-
-	for (int i = 0; i < nBodies; i++) {
-		fprintf(fd, "%f\n", bodies.x[i]);
-		fprintf(fd, "%f\n", bodies.y[i]);
-		fprintf(fd, "%f\n", bodies.z[i]);
-	}
-
-	fclose(fd);
-
-	printf("Data written successfully\n");
-#endif
 
 	/****************************** Cleanup ******************************/
 	// Device
