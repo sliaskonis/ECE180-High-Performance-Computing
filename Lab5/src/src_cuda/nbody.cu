@@ -59,7 +59,7 @@ __global__ void bodyForce(Body p, float dt, int tiles, int n) {
 			dy = body_coordinates_y[i] - curr_y;
 			dz = body_coordinates_z[i] - curr_z;
 			distSqr = dx*dx + dy*dy + dz*dz + SOFTENING;
-			invDist = 1.0f / sqrtf(distSqr);
+			invDist = rsqrtf(distSqr);
 			invDist3 = invDist * invDist * invDist;
 
 			Fx += dx * invDist3; 
@@ -83,7 +83,7 @@ __global__ void bodyForce(Body p, float dt, int tiles, int n) {
 		dy = body_coordinates_y[i] - curr_y;
 		dz = body_coordinates_z[i] - curr_z;
 		distSqr = dx*dx + dy*dy + dz*dz + SOFTENING;
-		invDist = 1.0f / sqrtf(distSqr);
+		invDist = rsqrtf(distSqr);
 		invDist3 = invDist * invDist * invDist;
 
 		Fx += dx * invDist3; 
