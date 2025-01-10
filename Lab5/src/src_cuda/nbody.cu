@@ -34,6 +34,10 @@ __global__ void bodyForce(Body p, float dt, int tiles, int n) {
 	int tid = threadIdx.x + blockIdx.x*blockDim.x;
 	int tile;
 
+	if (tid >= n) {
+		return;
+	}
+	
 	float dx, dy, dz;
 	float distSqr, invDist, invDist3;
 	float Fx = 0.0f;
