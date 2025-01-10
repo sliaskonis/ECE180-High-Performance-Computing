@@ -125,12 +125,12 @@ int main(const int argc, const char** argv) {
 
 	/****************************** Host memory allocation ******************************/
 	int bytes = sizeof(float)*nBodies;
-	bodies.x = (float *)malloc(bytes);
-	bodies.y = (float *)malloc(bytes);
-	bodies.z = (float *)malloc(bytes);
-	bodies.vx = (float *)malloc(bytes);
-	bodies.vy = (float *)malloc(bytes);
-	bodies.vz = (float *)malloc(bytes);
+	cudaHostAlloc(&bodies.x,  bytes, cudaHostAllocDefault);
+	cudaHostAlloc(&bodies.y,  bytes, cudaHostAllocDefault);
+	cudaHostAlloc(&bodies.z,  bytes, cudaHostAllocDefault);
+	cudaHostAlloc(&bodies.vx, bytes, cudaHostAllocDefault);
+	cudaHostAlloc(&bodies.vy, bytes, cudaHostAllocDefault);
+	cudaHostAlloc(&bodies.vz, bytes, cudaHostAllocDefault);
 
   	randomizeBodies(&bodies, nBodies); // Init pos / vel data
 
@@ -226,12 +226,12 @@ int main(const int argc, const char** argv) {
 	cudaFree(d_bodies.vz);	
 	
 	// Host
-	free(bodies.x);
-	free(bodies.y);
-	free(bodies.z);
-	free(bodies.vx);
-	free(bodies.vy);
-	free(bodies.vz);	
+	cudaFreeHost(bodies.x);
+	cudaFreeHost(bodies.y);
+	cudaFreeHost(bodies.z);
+	cudaFreeHost(bodies.vx);
+	cudaFreeHost(bodies.vy);
+	cudaFreeHost(bodies.vz);	
 
 	cudaDeviceReset();
 }
