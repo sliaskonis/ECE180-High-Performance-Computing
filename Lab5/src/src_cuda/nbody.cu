@@ -33,10 +33,6 @@ void randomizeBodies(Body *bodies, int n) {
 __global__ void bodyForce(Body p, float dt, int tiles, int n) {
 	int tid = threadIdx.x + blockIdx.x*blockDim.x;
 	int tile;
-
-	if (tid >= n) {
-		return;
-	}
 	
 	float dx, dy, dz;
 	float distSqr, invDist, invDist3;
@@ -100,8 +96,12 @@ __global__ void bodyForce(Body p, float dt, int tiles, int n) {
 	p.vz[tid] += dt*Fz;
 }
 
-__global__ void calculatePositions(Body p, float dt) {
+__global__ void calculatePositions(Body p, float dt, int n) {
 	int tid = threadIdx.x + blockIdx.x*blockDim.x;
+	if (tid >= n) {
+		return;
+	}
+
 	p.x[tid] += p.vx[tid]*dt;
 	p.y[tid] += p.vy[tid]*dt;
 	p.z[tid] += p.vz[tid]*dt;
@@ -166,7 +166,8 @@ int main(const int argc, const char** argv) {
 		checkCudaError("bodyForce");
         cudaDeviceSynchronize();
 
-		calculatePositions<<<grid, block>>>(d_bodies, dt);
+		calculatePositions<<<grid, block>>>(d_bodies, dt, nBodies);
+		cudaDeviceSynchronize();
 
 		// Send final coordinates back to host
 		if (iter == nIters) {
