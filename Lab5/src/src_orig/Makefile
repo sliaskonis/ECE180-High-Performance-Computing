@@ -1,5 +1,5 @@
-CC = gcc
-CFLAGS = -std=c99 -O3 -D_DEFAULT_SOURCE
+CC = icx
+CFLAGS = -std=c99 -fast -D_DEFAULT_SOURCE
 LDFLAGS = -lm
 
 TARGET = nbody
