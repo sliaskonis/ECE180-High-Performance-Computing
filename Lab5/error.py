@@ -2,6 +2,8 @@ import math
 import sys
 import re
 from decimal import Decimal
+from collections import Counter
+import matplotlib.pyplot as plt
 
 # Define the file name
 filename = sys.argv[1]
@@ -11,12 +13,12 @@ errors = 0
 differences = []
 error_degrees = []
 max_error = None
+
 # Function to calculate the degree of the error
 def find_error_degree(num1, num2):
     diff = abs(num1 - num2)
     global max_error
-    if diff == 0:
-        return "No difference"  # Numbers are exactly the same
+
     # Count the number of leading zeros after the decimal point
     err = -math.floor(math.log10(diff))-1
     if not max_error:
@@ -30,6 +32,7 @@ match = re.search(r'\d+', filename)
 number = match.group()
 golden_filename = f"final_coordinates/golden/golden_coordinates_{number}.txt"
 
+error_degree = []
 # Open the file and read its lines
 with open(filename, 'r') as file1:
     with open(golden_filename, 'r') as file2:
@@ -40,16 +43,33 @@ with open(filename, 'r') as file1:
             num1 = Decimal(num1)
             num2 = Decimal(num2)
 
-            # Compare the numbers and increment errors if they are the same
-            if num1 == num2:
-                error_degrees.append("same")  # For numbers that are identical
-                continue
-            else:
-                error_degree = (find_error_degree(num1, num2))
-                if error_degree < 2:
+            # Compare the numbers and increment errors if they are not the same
+            if num1 != num2:
+                error_degree.append(find_error_degree(num1, num2))
+                # Tollerance < .2
+                if error_degree[-1] < 2:
                     errors += 1
 
 # Print the results
 print(f"Number of errors : {errors}")
 print(f"Max error at digit : {max_error}")
-# print("Error degrees array: ", error_degrees)
+
+# Count how many erros occur for each digit
+counts = Counter(error_degree)
+
+# Sort count
+sorted_by_count = sorted(counts.items(), key=lambda x: x[0])
+
+for num, count in sorted_by_count:
+    print(f"{num}: {count}")
+
+# Plot the counts
+plt.bar(nums, counts_values, color='skyblue', edgecolor='black')
+plt.xlabel("Numbers")
+plt.ylabel("Frequency")
+plt.title("Frequency of Errors for Each Number")
+plt.xticks(nums)  # Ensure all numbers appear on the x-axis
+plt.grid(axis='y', linestyle='--', alpha=0.7)
+
+# Show the plot
+plt.show()
