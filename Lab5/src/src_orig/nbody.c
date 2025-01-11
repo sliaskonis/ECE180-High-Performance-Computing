@@ -59,6 +59,34 @@ int main(const int argc, const char** argv) {
 			p[i].z += p[i].vz*dt;
 		}
 
+		#ifdef SAVE_FINAL_COORDINATES
+		/****************************** Save Final Coordinates ******************************/
+		if (iter == 2) {
+			char filename[256];
+
+			sprintf(filename, "serial_coordinates_%d.txt", nBodies);
+
+			printf("Writing final coordinates to %s\n", filename);
+			
+			FILE *fd = fopen(filename, "w");
+
+			if (!fd) {
+				perror("Failed opening file");
+				return -1;
+			}
+
+			for (int i = 0; i < nBodies; i++) {
+				fprintf(fd, "%f\n", p[i].x);
+				fprintf(fd, "%f\n", p[i].y);
+				fprintf(fd, "%f\n", p[i].z);
+			}
+
+			fclose(fd);
+
+			printf("Data written successfully\n");
+		}
+		#endif
+
     	const double tElapsed = GetTimer() / 1000.0;
     	if (iter > 1) { // First iter is warm up
       		totalTime += tElapsed; 
@@ -70,31 +98,7 @@ int main(const int argc, const char** argv) {
   	printf("%d Bodies: average %0.3f Billion Interactions / second\n", nBodies, 1e-9 * nBodies * nBodies / avgTime);
 	printf("Total time: %.3f\n", totalTime);
 	
-#ifdef SAVE_FINAL_COORDINATES
-	/****************************** Save Final Coordinates ******************************/
-	char filename[256];
 
-	sprintf(filename, "serial_coordinates_%d.txt", nBodies);
-
-	printf("Writing final coordinates to %s\n", filename);
-	
-	FILE *fd = fopen(filename, "w");
-
-	if (!fd) {
-		perror("Failed opening file");
-		return -1;
-	}
-
-	for (int i = 0; i < nBodies; i++) {
-		fprintf(fd, "%f\n", p[i].x);
-		fprintf(fd, "%f\n", p[i].y);
-		fprintf(fd, "%f\n", p[i].z);
-	}
-
-	fclose(fd);
-
-	printf("Data written successfully\n");
-#endif
 
 	free(buf);
 }

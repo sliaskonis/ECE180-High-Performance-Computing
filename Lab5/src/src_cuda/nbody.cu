@@ -176,45 +176,52 @@ int main(const int argc, const char** argv) {
 			cudaMemcpy(bodies.z, d_bodies.z, bytes, cudaMemcpyDeviceToHost);
 		}
 
-        cudaEventRecord(iter_end, 0);
+		/****************************** Save Final Coordinates ******************************/
+		#ifdef SAVE_FINAL_COORDINATES
+		if (iter == 2) {
+			// Copy coordinates back to host for checking
+			cudaMemcpy(bodies.x, d_bodies.x, bytes, cudaMemcpyDeviceToHost);
+			cudaMemcpy(bodies.y, d_bodies.y, bytes, cudaMemcpyDeviceToHost);
+			cudaMemcpy(bodies.z, d_bodies.z, bytes, cudaMemcpyDeviceToHost);
+
+			char filename[256];
+		
+			sprintf(filename, "cuda_coordinates_%d.txt", nBodies);
+		
+			printf("Writing final coordinates to %s\n", filename);
+			FILE *fd = fopen(filename, "w");
+		
+			if (!fd) {
+				perror("Failed opening file");
+				return -1;
+			}
+		
+			for (int i = 0; i < nBodies; i++) {
+				fprintf(fd, "%f\n", bodies.x[i]);
+				fprintf(fd, "%f\n", bodies.y[i]);
+				fprintf(fd, "%f\n", bodies.z[i]);
+			}
+		
+			fclose(fd);
+		
+			printf("Data written successfully\n");
+			#endif
+		}		
+
+		cudaEventRecord(iter_end, 0);
 		cudaEventSynchronize(iter_end);
 
 		cudaEventElapsedTime(&elapsed_time, iter_start, iter_end);
-    	if (iter > 1) { // First iter is warm up
-      		totalTime += elapsed_time/1000.0f;
-    	}
-    	printf("Iteration %d: %.3f seconds\n", iter, elapsed_time/1000.0f);
+		if (iter > 1) { // First iter is warm up
+			totalTime += elapsed_time/1000.0f;
+		}
+		printf("Iteration %d: %.3f seconds\n", iter, elapsed_time/1000.0f);
   	}
 
   	float avgTime = totalTime / (float)(nIters-1);
 
   	printf("%d Bodies: average %0.3f Billion Interactions / second\n", nBodies, 1e-9 * nBodies * nBodies / avgTime);
 	printf("Total time: %.3f\n", totalTime);
-
-#ifdef SAVE_FINAL_COORDINATES
-	/****************************** Save Final Coordinates ******************************/
-	char filename[256];
-
-	sprintf(filename, "cuda_coordinates_%d.txt", nBodies);
-
-	printf("Writing final coordinates to %s\n", filename);
-	FILE *fd = fopen(filename, "w");
-
-	if (!fd) {
-		perror("Failed opening file");
-		return -1;
-	}
-
-	for (int i = 0; i < nBodies; i++) {
-		fprintf(fd, "%f\n", bodies.x[i]);
-		fprintf(fd, "%f\n", bodies.y[i]);
-		fprintf(fd, "%f\n", bodies.z[i]);
-	}
-
-	fclose(fd);
-
-	printf("Data written successfully\n");
-#endif
 
 	/****************************** Cleanup ******************************/
 	// Device
