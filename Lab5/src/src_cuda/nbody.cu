@@ -205,8 +205,8 @@ int main(const int argc, const char** argv) {
 			fclose(fd);
 		
 			printf("Data written successfully\n");
-			#endif
 		}		
+		#endif
 
 		cudaEventRecord(iter_end, 0);
 		cudaEventSynchronize(iter_end);
