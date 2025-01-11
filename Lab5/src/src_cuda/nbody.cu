@@ -32,7 +32,7 @@ void randomizeBodies(Body *bodies, int n) {
 /***************** KERNEL CODE *****************/
 __global__ void bodyForce(Body p, float dt, int tiles, int n) {
 	int tid = threadIdx.x + blockIdx.x*blockDim.x;
-	int tile;
+	signed int tile;
 	
 	float dx, dy, dz;
 	float distSqr, invDist, invDist3;
@@ -54,7 +54,7 @@ __global__ void bodyForce(Body p, float dt, int tiles, int n) {
 
 		__syncthreads();
 		#pragma unroll 16
-		for (int i = 0; i < THREADS_PER_BLOCK; i++) {
+		for (signed int i = 0; i < THREADS_PER_BLOCK; i++) {
 			dx = body_coordinates_x[i] - curr_x;
 			dy = body_coordinates_y[i] - curr_y;
 			dz = body_coordinates_z[i] - curr_z;
@@ -75,10 +75,10 @@ __global__ void bodyForce(Body p, float dt, int tiles, int n) {
 	body_coordinates_z[threadIdx.x] = p.z[threadIdx.x + (tiles-1)*blockDim.x];
 	__syncthreads();
 
-	int last_bodies = (n%THREADS_PER_BLOCK == 0) ? THREADS_PER_BLOCK : n%THREADS_PER_BLOCK;
+	int last_bodies = (n%THREADS_PER_BLOCK == 0) ? THREADS_PER_BLOCK : n&(THREADS_PER_BLOCK-1);
 
 	#pragma unroll 16
-	for (int i = 0; i < last_bodies; i++) {
+	for (signed int i = 0; i < last_bodies; i++) {
 		dx = body_coordinates_x[i] - curr_x;
 		dy = body_coordinates_y[i] - curr_y;
 		dz = body_coordinates_z[i] - curr_z;
