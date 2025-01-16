@@ -6,7 +6,10 @@
 #define SOFTENING 1e-9f  /* Will guard against denormals */
 #define THREADS_PER_BLOCK 1024
 
-typedef struct { float *x, *y, *z, *vx, *vy, *vz;} Body;
+typedef struct { 
+	float4 *pos; 
+	float4 *vel;
+} Body;
 
 /****************************** Helper Functions ******************************/
 void checkCudaError(const char *step) {
@@ -20,12 +23,12 @@ void checkCudaError(const char *step) {
 
 void randomizeBodies(Body *bodies, int n) {
   	for (int i = 0; i < n; i++) {
-    	bodies->x[i] = 2.0f * (rand() / (float)RAND_MAX) - 1.0f;
-    	bodies->y[i] = 2.0f * (rand() / (float)RAND_MAX) - 1.0f;
-    	bodies->z[i] = 2.0f * (rand() / (float)RAND_MAX) - 1.0f;
-    	bodies->vx[i] = 2.0f * (rand() / (float)RAND_MAX) - 1.0f;
-    	bodies->vy[i] = 2.0f * (rand() / (float)RAND_MAX) - 1.0f;
-    	bodies->vz[i] = 2.0f * (rand() / (float)RAND_MAX) - 1.0f;
+    	bodies->pos[i].x = 2.0f * (rand() / (float)RAND_MAX) - 1.0f;
+    	bodies->pos[i].y = 2.0f * (rand() / (float)RAND_MAX) - 1.0f;
+    	bodies->pos[i].z = 2.0f * (rand() / (float)RAND_MAX) - 1.0f;
+    	bodies->vel[i].x = 2.0f * (rand() / (float)RAND_MAX) - 1.0f;
+    	bodies->vel[i].y = 2.0f * (rand() / (float)RAND_MAX) - 1.0f;
+    	bodies->vel[i].z = 2.0f * (rand() / (float)RAND_MAX) - 1.0f;
   	}
 }
 
@@ -34,66 +37,54 @@ __global__ void bodyForce(Body p, float dt, int tiles, int n) {
 	int tid = threadIdx.x + blockIdx.x*blockDim.x;
 	signed int tile;
 	
-	float dx, dy, dz;
+	float4 diff;
 	float distSqr, invDist, invDist3;
 	float Fx = 0.0f;
 	float Fy = 0.0f;
 	float Fz = 0.0f;
 
-	__shared__ float body_coordinates_x[THREADS_PER_BLOCK];
-	__shared__ float body_coordinates_y[THREADS_PER_BLOCK];
-	__shared__ float body_coordinates_z[THREADS_PER_BLOCK];
-	float curr_x = p.x[tid];
-	float curr_y = p.y[tid];
-	float curr_z = p.z[tid];
+	__shared__ float4 body_coordinates_pos[THREADS_PER_BLOCK];
+	float4 curr_pos = p.pos[tid];
 	
 	for (tile = 0; tile < tiles-1; tile++) {
-		body_coordinates_x[threadIdx.x] = p.x[threadIdx.x + tile*blockDim.x];
-		body_coordinates_y[threadIdx.x] = p.y[threadIdx.x + tile*blockDim.x];
-		body_coordinates_z[threadIdx.x] = p.z[threadIdx.x + tile*blockDim.x];
+		body_coordinates_pos[threadIdx.x] = p.pos[threadIdx.x + tile*blockDim.x];
 
 		__syncthreads();
 		#pragma unroll 16
 		for (signed int i = 0; i < THREADS_PER_BLOCK; i++) {
-			dx = body_coordinates_x[i] - curr_x;
-			dy = body_coordinates_y[i] - curr_y;
-			dz = body_coordinates_z[i] - curr_z;
-			distSqr = dx*dx + dy*dy + dz*dz + SOFTENING;
+			diff = body_coordinates_pos[i] - curr_pos;
+			distSqr = diff.x*diff.x + diff.y*diff.y + diff.z*diff.z + SOFTENING;
 			invDist = rsqrtf(distSqr);
 			invDist3 = invDist * invDist * invDist;
 
-			Fx += dx * invDist3; 
-			Fy += dy * invDist3; 
-			Fz += dz * invDist3;
+			Fx += diff.x * invDist3; 
+			Fy += diff.y * invDist3; 
+			Fz += diff.z * invDist3;
 		}
 		__syncthreads();
 	}
 
 	// Bring last tile into shared memory;
-	body_coordinates_x[threadIdx.x] = p.x[threadIdx.x + (tiles-1)*blockDim.x];
-	body_coordinates_y[threadIdx.x] = p.y[threadIdx.x + (tiles-1)*blockDim.x];
-	body_coordinates_z[threadIdx.x] = p.z[threadIdx.x + (tiles-1)*blockDim.x];
+	body_coordinates_pos[threadIdx.x] = p.pos[threadIdx.x + (tiles-1)*blockDim.x];
 	__syncthreads();
 
 	int last_bodies = (n%THREADS_PER_BLOCK == 0) ? THREADS_PER_BLOCK : n&(THREADS_PER_BLOCK-1);
 
 	#pragma unroll 16
 	for (signed int i = 0; i < last_bodies; i++) {
-		dx = body_coordinates_x[i] - curr_x;
-		dy = body_coordinates_y[i] - curr_y;
-		dz = body_coordinates_z[i] - curr_z;
-		distSqr = dx*dx + dy*dy + dz*dz + SOFTENING;
+		diff = body_coordinates_pos[i] - curr_pos;
+		distSqr = diff.x*diff.x + diff.y*diff.y + diff.z*diff.z + SOFTENING;
 		invDist = rsqrtf(distSqr);
 		invDist3 = invDist * invDist * invDist;
 
-		Fx += dx * invDist3; 
-		Fy += dy * invDist3; 
-		Fz += dz * invDist3;
+		Fx += diff.x * invDist3; 
+		Fy += diff.y * invDist3; 
+		Fz += diff.z * invDist3;
 	}
 
-    p.vx[tid] += dt*Fx;
-	p.vy[tid] += dt*Fy;
-	p.vz[tid] += dt*Fz;
+    p.vel[tid].x += dt*Fx;
+	p.vel[tid].y += dt*Fy;
+	p.vel[tid].z += dt*Fz;
 }
 
 __global__ void calculatePositions(Body p, float dt, int n) {
@@ -102,9 +93,9 @@ __global__ void calculatePositions(Body p, float dt, int n) {
 		return;
 	}
 
-	p.x[tid] += p.vx[tid]*dt;
-	p.y[tid] += p.vy[tid]*dt;
-	p.z[tid] += p.vz[tid]*dt;
+	p.pos[tid].x += p.vel[tid].x*dt;
+	p.pos[tid].y += p.vel[tid].y*dt;
+	p.pos[tid].z += p.vel[tid].z*dt;
 }
 
 int main(const int argc, const char** argv) {
@@ -124,13 +115,9 @@ int main(const int argc, const char** argv) {
 	cudaEventCreate(&iter_end);
 
 	/****************************** Host memory allocation ******************************/
-	int bytes = sizeof(float)*nBodies;
-	bodies.x = (float *)malloc(bytes);
-	bodies.y = (float *)malloc(bytes);
-	bodies.z = (float *)malloc(bytes);
-	bodies.vx = (float *)malloc(bytes);
-	bodies.vy = (float *)malloc(bytes);
-	bodies.vz = (float *)malloc(bytes);
+	int bytes = sizeof(float4)*nBodies;
+	bodies.pos = (float4 *)malloc(bytes);
+	bodies.vel = (float4 *)malloc(bytes);
 
   	randomizeBodies(&bodies, nBodies); // Init pos / vel data
 
@@ -140,12 +127,8 @@ int main(const int argc, const char** argv) {
 	int tiles = (int)(ceil((float)nBodies/THREADS_PER_BLOCK));
 
 	/****************************** Data transfers ******************************/
-	cudaMalloc((void **) &d_bodies.x, bytes);
-	cudaMalloc((void **) &d_bodies.y, bytes);
-	cudaMalloc((void **) &d_bodies.z, bytes);
-	cudaMalloc((void **) &d_bodies.vx, bytes);
-	cudaMalloc((void **) &d_bodies.vy, bytes);
-	cudaMalloc((void **) &d_bodies.vz, bytes);
+	cudaMalloc((void **) &d_bodies.pos, bytes);
+	cudaMalloc((void **) &d_bodies.vel, bytes);
 
 	/****************************** Real Computation ******************************/
   	for (int iter = 1; iter <= nIters; iter++) {
@@ -153,13 +136,8 @@ int main(const int argc, const char** argv) {
 
 		// In the first iteration both initial coordinates and velocity needs to be copied to device
 		if (iter == 1) {
-			cudaMemcpy(d_bodies.x,  bodies.x,  bytes, cudaMemcpyHostToDevice);
-			cudaMemcpy(d_bodies.y,  bodies.y,  bytes, cudaMemcpyHostToDevice);
-			cudaMemcpy(d_bodies.z,  bodies.z,  bytes, cudaMemcpyHostToDevice);
-
-			cudaMemcpy(d_bodies.vx, bodies.vx, bytes, cudaMemcpyHostToDevice);
-			cudaMemcpy(d_bodies.vy, bodies.vy, bytes, cudaMemcpyHostToDevice);
-			cudaMemcpy(d_bodies.vz, bodies.vz, bytes, cudaMemcpyHostToDevice);
+			cudaMemcpy(d_bodies.pos,  bodies.pos,  bytes, cudaMemcpyHostToDevice);
+			cudaMemcpy(d_bodies.vel,  bodies.vel, bytes, cudaMemcpyHostToDevice);
 		}
 
 		bodyForce<<<grid, block>>>(d_bodies, dt, tiles, nBodies);
@@ -171,18 +149,14 @@ int main(const int argc, const char** argv) {
 
 		// Send final coordinates back to host
 		if (iter == nIters) {
-			cudaMemcpy(bodies.x, d_bodies.x, bytes, cudaMemcpyDeviceToHost);
-			cudaMemcpy(bodies.y, d_bodies.y, bytes, cudaMemcpyDeviceToHost);
-			cudaMemcpy(bodies.z, d_bodies.z, bytes, cudaMemcpyDeviceToHost);
+			cudaMemcpy(bodies.pos, d_bodies.pos, bytes, cudaMemcpyDeviceToHost);
 		}
 
 		/****************************** Save Final Coordinates ******************************/
 		#ifdef SAVE_FINAL_COORDINATES
 		if (iter == 2) {
 			// Copy coordinates back to host for checking
-			cudaMemcpy(bodies.x, d_bodies.x, bytes, cudaMemcpyDeviceToHost);
-			cudaMemcpy(bodies.y, d_bodies.y, bytes, cudaMemcpyDeviceToHost);
-			cudaMemcpy(bodies.z, d_bodies.z, bytes, cudaMemcpyDeviceToHost);
+			cudaMemcpy(bodies.pos, d_bodies.pos, bytes, cudaMemcpyDeviceToHost);
 
 			char filename[256];
 		
@@ -197,9 +171,9 @@ int main(const int argc, const char** argv) {
 			}
 		
 			for (int i = 0; i < nBodies; i++) {
-				fprintf(fd, "%f\n", bodies.x[i]);
-				fprintf(fd, "%f\n", bodies.y[i]);
-				fprintf(fd, "%f\n", bodies.z[i]);
+				fprintf(fd, "%f\n", bodies.pos[i].x);
+				fprintf(fd, "%f\n", bodies.pos[i].y);
+				fprintf(fd, "%f\n", bodies.pos[i].z);
 			}
 		
 			fclose(fd);
@@ -225,20 +199,12 @@ int main(const int argc, const char** argv) {
 
 	/****************************** Cleanup ******************************/
 	// Device
-	cudaFree(d_bodies.x);
-	cudaFree(d_bodies.y);
-	cudaFree(d_bodies.z);
-	cudaFree(d_bodies.vx);
-	cudaFree(d_bodies.vy);
-	cudaFree(d_bodies.vz);	
+	cudaFree(d_bodies.pos);
+	cudaFree(d_bodies.vel);
 	
 	// Host
-	free(bodies.x);
-	free(bodies.y);
-	free(bodies.z);
-	free(bodies.vx);
-	free(bodies.vy);
-	free(bodies.vz);	
+	free(bodies.pos);
+	free(bodies.vel);	
 
 	cudaDeviceReset();
 }
