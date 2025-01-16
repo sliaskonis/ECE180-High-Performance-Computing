@@ -31,15 +31,15 @@ void randomizeBodies(Body *bodies, int n) {
 }
 
 /***************** KERNEL CODE *****************/
-__global__ void bodyForce(Body p, float dt, int tiles, int n) {
+__global__ void bodyForce(Body p, __half dt, int tiles, int n) {
 	int tid = threadIdx.x + blockIdx.x*blockDim.x;
 	int tile;
 	
-	float dx, dy, dz;
-	float distSqr, invDist, invDist3;
-	float Fx = 0.0f;
-	float Fy = 0.0f;
-	float Fz = 0.0f;
+	__half dx, dy, dz;
+	__half distSqr, invDist, invDist3;
+	__half Fx = __float2half(0.0f);
+	__half Fy = __float2half(0.0f);
+	__half Fz = __float2half(0.0f);
 
 	__shared__ __half body_coordinates_x[THREADS_PER_BLOCK];
 	__shared__ __half body_coordinates_y[THREADS_PER_BLOCK];
@@ -47,25 +47,43 @@ __global__ void bodyForce(Body p, float dt, int tiles, int n) {
 	__half curr_x = p.x[tid];
 	__half curr_y = p.y[tid];
 	__half curr_z = p.z[tid];
+
+	if (tid == 0) {
+		printf("Coordinates: %f\n", __half2float(p.x[tid]));
+		printf("Coordinates: %f\n", __half2float(p.y[tid]));
+		printf("Coordinates: %f\n", __half2float(p.z[tid]));
+	}
 	
+	int iter = 1;
 	for (tile = 0; tile < tiles-1; tile++) {
 		body_coordinates_x[threadIdx.x] = p.x[threadIdx.x + tile*blockDim.x];
 		body_coordinates_y[threadIdx.x] = p.y[threadIdx.x + tile*blockDim.x];
 		body_coordinates_z[threadIdx.x] = p.z[threadIdx.x + tile*blockDim.x];
 
 		__syncthreads();
-		#pragma unroll 16
+		// #pragma unroll 16
 		for (int i = 0; i < THREADS_PER_BLOCK; i++) {
-			dx = __half2float(__hsub(body_coordinates_x[i], curr_x));
-			dy = __half2float(__hsub(body_coordinates_y[i], curr_y));
-			dz = __half2float(__hsub(body_coordinates_z[i], curr_z));
-			distSqr = dx*dx + dy*dy + dz*dz + SOFTENING;
-			invDist = 1.0f / sqrtf(distSqr);
-			invDist3 = invDist * invDist * invDist;
+			dx = __hsub(body_coordinates_x[i], curr_x);
+			dy = __hsub(body_coordinates_y[i], curr_y);
+			dz = __hsub(body_coordinates_z[i], curr_z);
+			distSqr = __hfma(dx, dx, __hfma(dy, dy, __hfma(dz, dz, __float2half(SOFTENING))));
+			invDist = hrcp(hsqrt(distSqr));
+			invDist3 = __hmul(invDist, __hmul(invDist, invDist));
 
-			Fx += dx * invDist3; 
-			Fy += dy * invDist3; 
-			Fz += dz * invDist3;
+			if (tid == 0 && iter == 1) {
+				printf("dx: %f\n", __half2float(dx));
+				printf("dy: %f\n", __half2float(dy));
+				printf("dz: %f\n", __half2float(dz));
+				printf("distSqr:     %f\n", __half2float(distSqr));
+				printf("Invdist:     %f\n", __half2float(invDist));
+				printf("Invdist3:    %f\n", __half2float(invDist3));
+
+				iter = 2;
+			}
+
+			Fx = __hadd(Fx, __hmul(dx, invDist3)); 
+			Fy = __hadd(Fy, __hmul(dy, invDist3)); 
+			Fz = __hadd(Fz, __hmul(dz, invDist3));
 		}
 		__syncthreads();
 	}
@@ -78,34 +96,34 @@ __global__ void bodyForce(Body p, float dt, int tiles, int n) {
 
 	int last_bodies = (n%THREADS_PER_BLOCK == 0) ? THREADS_PER_BLOCK : n%THREADS_PER_BLOCK;
 
-	#pragma unroll 16
+	// #pragma unroll 16
 	for (int i = 0; i < last_bodies; i++) {
-		dx = body_coordinates_x[i] - curr_x;
-		dy = body_coordinates_y[i] - curr_y;
-		dz = body_coordinates_z[i] - curr_z;
-		distSqr = dx*dx + dy*dy + dz*dz + SOFTENING;
-		invDist = 1.0f / sqrtf(distSqr);
-		invDist3 = invDist * invDist * invDist;
+		dx = __hsub(body_coordinates_x[i], curr_x);
+		dy = __hsub(body_coordinates_y[i], curr_y);
+		dz = __hsub(body_coordinates_z[i], curr_z);
+		distSqr = __hfma(dx, dx, __hfma(dy, dy, __hfma(dz, dz, __float2half(SOFTENING))));
+		invDist = hrcp(hsqrt(distSqr));
+		invDist3 = __hmul(invDist, __hmul(invDist, invDist));
 
-		Fx += dx * invDist3; 
-		Fy += dy * invDist3; 
-		Fz += dz * invDist3;
+		Fx = __hadd(Fx, __hmul(dx, invDist3)); 
+		Fy = __hadd(Fy, __hmul(dy, invDist3)); 
+		Fz = __hadd(Fz, __hmul(dz, invDist3));
 	}
 
-    p.vx[tid] = __hadd(p.vx[tid], __float2half(dt*Fx));
-	p.vy[tid] = __hadd(p.vy[tid], __float2half(dt*Fy));
-	p.vz[tid] = __hadd(p.vz[tid], __float2half(dt*Fz));
+    p.vx[tid] = __hadd(p.vx[tid], __hmul(dt, Fx));
+	p.vy[tid] = __hadd(p.vy[tid], __hmul(dt, Fy));
+	p.vz[tid] = __hadd(p.vz[tid], __hmul(dt, Fz));
 }
 
-__global__ void calculatePositions(Body p, float dt, int n) {
+__global__ void calculatePositions(Body p, __half dt, int n) {
 	int tid = threadIdx.x + blockIdx.x*blockDim.x;
 	if (tid >= n) {
 		return;
 	}
 
-	p.x[tid] += __hmul(p.vx[tid], __float2half(dt));
-	p.y[tid] += __hmul(p.vy[tid], __float2half(dt));
-	p.z[tid] += __hmul(p.vz[tid], __float2half(dt));
+	p.x[tid] = __hadd(p.x[tid], __hmul(p.vx[tid], dt));
+	p.y[tid] = __hadd(p.y[tid], __hmul(p.vy[tid], dt));
+	p.z[tid] = __hadd(p.z[tid], __hmul(p.vz[tid], dt));
 }
 
 int main(const int argc, const char** argv) {
@@ -113,7 +131,7 @@ int main(const int argc, const char** argv) {
   	int nBodies = 30000;
   	if (argc > 1) nBodies = atoi(argv[1]);
 
-  	const float dt = 0.01f; // time step
+  	const __half dt = __float2half(0.01f); // time step
   	const int nIters = 10;  // simulation iterations
 
 	float totalTime = 0.0f, elapsed_time = 0.0f;
@@ -167,14 +185,39 @@ int main(const int argc, const char** argv) {
 		checkCudaError("bodyForce");
         cudaDeviceSynchronize();
 
+		// cudaMemcpy(bodies.vx, d_bodies.vx, bytes, cudaMemcpyDeviceToHost);
+		// cudaMemcpy(bodies.vy, d_bodies.vy, bytes, cudaMemcpyDeviceToHost);
+		// cudaMemcpy(bodies.vz, d_bodies.vz, bytes, cudaMemcpyDeviceToHost);
+
+		// printf("Iteration %d\n", iter);
+		// for (int i = 0; i < 10; i++) {
+		// 	printf("%f\n", __half2float(bodies.vx[i]));
+		// 	printf("%f\n", __half2float(bodies.vy[i]));
+		// 	printf("%f\n", __half2float(bodies.vz[i]));
+		// }
+
+
 		calculatePositions<<<grid, block>>>(d_bodies, dt, nBodies);
+		checkCudaError("calculatePositions");
 		cudaDeviceSynchronize();
+
+		// cudaMemcpy(bodies.x, d_bodies.x, bytes, cudaMemcpyDeviceToHost);
+		// cudaMemcpy(bodies.y, d_bodies.y, bytes, cudaMemcpyDeviceToHost);
+		// cudaMemcpy(bodies.z, d_bodies.z, bytes, cudaMemcpyDeviceToHost);
+
+		// printf("Iteration %d\n", iter);
+		// for (int i = 0; i < 10; i++) {
+		// 	printf("%f\n", __half2float(bodies.x[i]));
+		// 	printf("%f\n", __half2float(bodies.y[i]));
+		// 	printf("%f\n", __half2float(bodies.z[i]));
+		// }
 
 		// Send final coordinates back to host
 		if (iter == nIters) {
 			cudaMemcpy(bodies.x, d_bodies.x, bytes, cudaMemcpyDeviceToHost);
 			cudaMemcpy(bodies.y, d_bodies.y, bytes, cudaMemcpyDeviceToHost);
 			cudaMemcpy(bodies.z, d_bodies.z, bytes, cudaMemcpyDeviceToHost);
+
 		}
 
 		/****************************** Save Final Coordinates ******************************/

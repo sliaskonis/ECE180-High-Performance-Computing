@@ -1,5 +1,5 @@
 NVCC = nvcc
-NVCCFLAGS = -arch=sm_86 --use_fast_math -O3 --ptxas-options="-v"
+NVCCFLAGS = -arch=sm_86 -O3 --ptxas-options="-v"
 
 TARGET = nbody
 
