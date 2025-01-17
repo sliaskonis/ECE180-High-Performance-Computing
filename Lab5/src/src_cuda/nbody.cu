@@ -37,7 +37,7 @@ __global__ void bodyForce(Body p, float dt, int tiles, int n) {
 	int tid = threadIdx.x + blockIdx.x*blockDim.x;
 	signed int tile;
 	
-	float4 diff;
+	float dx, dy, dz;
 	float distSqr, invDist, invDist3;
 	float Fx = 0.0f;
 	float Fy = 0.0f;
@@ -52,14 +52,16 @@ __global__ void bodyForce(Body p, float dt, int tiles, int n) {
 		__syncthreads();
 		#pragma unroll 16
 		for (signed int i = 0; i < THREADS_PER_BLOCK; i++) {
-			diff = body_coordinates_pos[i] - curr_pos;
-			distSqr = diff.x*diff.x + diff.y*diff.y + diff.z*diff.z + SOFTENING;
+			dx = body_coordinates_pos[i].x - curr_pos.x;
+			dy = body_coordinates_pos[i].y - curr_pos.y;
+			dz = body_coordinates_pos[i].z - curr_pos.z;			
+			distSqr = dx*dx + dy*dy + dz*dz + SOFTENING;
 			invDist = rsqrtf(distSqr);
 			invDist3 = invDist * invDist * invDist;
 
-			Fx += diff.x * invDist3; 
-			Fy += diff.y * invDist3; 
-			Fz += diff.z * invDist3;
+			Fx += dx * invDist3; 
+			Fy += dy * invDist3; 
+			Fz += dz * invDist3;
 		}
 		__syncthreads();
 	}
@@ -72,14 +74,13 @@ __global__ void bodyForce(Body p, float dt, int tiles, int n) {
 
 	#pragma unroll 16
 	for (signed int i = 0; i < last_bodies; i++) {
-		diff = body_coordinates_pos[i] - curr_pos;
-		distSqr = diff.x*diff.x + diff.y*diff.y + diff.z*diff.z + SOFTENING;
-		invDist = rsqrtf(distSqr);
-		invDist3 = invDist * invDist * invDist;
-
-		Fx += diff.x * invDist3; 
-		Fy += diff.y * invDist3; 
-		Fz += diff.z * invDist3;
+		dx = body_coordinates_pos[i].x - curr_pos.x;
+		dy = body_coordinates_pos[i].y - curr_pos.y;
+		dz = body_coordinates_pos[i].z - curr_pos.z;			
+		distSqr = dx*dx + dy*dy + dz*dz + SOFTENING;
+		Fx += dx * invDist3; 
+		Fy += dy * invDist3; 
+		Fz += dz * invDist3;
 	}
 
     p.vel[tid].x += dt*Fx;
