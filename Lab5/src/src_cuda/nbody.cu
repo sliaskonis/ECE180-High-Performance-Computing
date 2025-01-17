@@ -7,8 +7,8 @@
 #define THREADS_PER_BLOCK 1024
 
 typedef struct { 
-	float4 *pos; 
-	float4 *vel;
+	float3 *pos; 
+	float3 *vel;
 } Body;
 
 /****************************** Helper Functions ******************************/
@@ -43,8 +43,8 @@ __global__ void bodyForce(Body p, float dt, int tiles, int n) {
 	float Fy = 0.0f;
 	float Fz = 0.0f;
 
-	__shared__ float4 body_coordinates_pos[THREADS_PER_BLOCK];
-	float4 curr_pos = p.pos[tid];
+	__shared__ float3 body_coordinates_pos[THREADS_PER_BLOCK];
+	float3 curr_pos = p.pos[tid];
 	
 	for (tile = 0; tile < tiles-1; tile++) {
 		body_coordinates_pos[threadIdx.x] = p.pos[threadIdx.x + tile*blockDim.x];
@@ -78,6 +78,9 @@ __global__ void bodyForce(Body p, float dt, int tiles, int n) {
 		dy = body_coordinates_pos[i].y - curr_pos.y;
 		dz = body_coordinates_pos[i].z - curr_pos.z;			
 		distSqr = dx*dx + dy*dy + dz*dz + SOFTENING;
+		invDist = rsqrtf(distSqr);
+		invDist3 = invDist * invDist * invDist;
+
 		Fx += dx * invDist3; 
 		Fy += dy * invDist3; 
 		Fz += dz * invDist3;
@@ -116,9 +119,9 @@ int main(const int argc, const char** argv) {
 	cudaEventCreate(&iter_end);
 
 	/****************************** Host memory allocation ******************************/
-	int bytes = sizeof(float4)*nBodies;
-	bodies.pos = (float4 *)malloc(bytes);
-	bodies.vel = (float4 *)malloc(bytes);
+	int bytes = sizeof(float3)*nBodies;
+	bodies.pos = (float3 *)malloc(bytes);
+	bodies.vel = (float3 *)malloc(bytes);
 
   	randomizeBodies(&bodies, nBodies); // Init pos / vel data
 
