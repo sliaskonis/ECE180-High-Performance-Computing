@@ -50,6 +50,9 @@ The projects and assignments were built using the following tools and libraries:
 4. **Assignment 4: Performance Profiling and Optimization**
     - Optimized an application and profiled it using `gprof` and `nvprof`.
 
+5. **Assignment 5: N-Body Simulation Using CUDA**
+    - 
+
 ## Installation
 
 To run these assignments on your local machine, follow these steps:
@@ -64,17 +67,7 @@ To run these assignments on your local machine, follow these steps:
     cd assignment-1
     ```
 
-3. **Compile the code**:
-    ```bash
-    gcc -fopenmp program.c -o program
-    ```
-
-4. **Run the program**:
-    ```bash
-    ./program
-    ```
-
-For MPI or CUDA assignments, specific compilation instructions are provided within the respective assignment folders.
+For all assignments (OpenMP, CUDA etc), specific compilation instructions are provided within the respective assignment folders.
 
 ## Usage
 
