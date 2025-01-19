@@ -45,13 +45,19 @@ The projects and assignments were built using the following tools and libraries:
     - Using AVX/SSE instructions to boost performance in areas where parallelization is not effective.
 
 3. **Assignment 3: Introduction to CUDA: Convolutions**
- - 
+    - Implemented a 2D convolution filter by decomposing it into row-wise and column-wise operations, applying these separately to an image.
+    - Experimented with different grid/block geometries for GPU execution, analyzing performance and comparing results with CPU execution.
+    - Investigated the impact of using double-precision instead of single-precision floating-point numbers on accuracy and performance.
+    - Addressed the problem of thread divergence by padding image arrays, eliminating boundary checks, and evaluating its impact on CPU and GPU performance.
 
-4. **Assignment 4: Performance Profiling and Optimization**
-    - Optimized an application and profiled it using `gprof` and `nvprof`.
+4. **Assignment 4: Histogram Equalization - Acceleration with CUDA**
+    - 
 
 5. **Assignment 5: N-Body Simulation Using CUDA**
-    - 
+    - Parallelized the sequential n-body simulation using OpenMP
+    - Ported the n-body simulation to CUDA for further parallelization
+    - Implemented different optimization strategies like: data distribution, tiling, loop unrolling, approximate optimizations etc.
+    - Profiled and compared all implementation (serial, OpenMP, CUDA)
 
 ## Installation
 
