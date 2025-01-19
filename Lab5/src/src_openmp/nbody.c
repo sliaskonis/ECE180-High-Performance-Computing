@@ -53,7 +53,7 @@ int main(const int argc, const char** argv) {
 
   	for (int iter = 1; iter <= nIters; iter++) {
     	StartTimer();
-	
+
 		#pragma omp parallel
 		{
 			bodyForce(p, dt, nBodies); // compute interbody forces
@@ -102,6 +102,6 @@ int main(const int argc, const char** argv) {
 
 	printf("Data written successfully\n");
 #endif
-  	
+
 	free(buf);
 }
