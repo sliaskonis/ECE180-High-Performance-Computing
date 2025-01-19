@@ -61,7 +61,7 @@ int main(const int argc, const char** argv) {
 
 		#ifdef SAVE_FINAL_COORDINATES
 		/****************************** Save Final Coordinates ******************************/
-		if (iter == 2) {
+		if (iter == 1) {
 			char filename[256];
 
 			sprintf(filename, "serial_coordinates_%d.txt", nBodies);

@@ -91,9 +91,11 @@ __global__ void bodyForce(Body p, float dt, int tiles, int n) {
 		Fz += dz * invDist3;
 	}
 
-    p.vx[tid] += dt*Fx;
-	p.vy[tid] += dt*Fy;
-	p.vz[tid] += dt*Fz;
+	if (tid < n) {
+    	p.vx[tid] += dt*Fx;
+		p.vy[tid] += dt*Fy;
+		p.vz[tid] += dt*Fz;
+	}
 }
 
 __global__ void calculatePositions(Body p, float dt, int n) {
@@ -178,7 +180,7 @@ int main(const int argc, const char** argv) {
 
 		/****************************** Save Final Coordinates ******************************/
 		#ifdef SAVE_FINAL_COORDINATES
-		if (iter == 2) {
+		if (iter == 1) {
 			// Copy coordinates back to host for checking
 			cudaMemcpy(bodies.x, d_bodies.x, bytes, cudaMemcpyDeviceToHost);
 			cudaMemcpy(bodies.y, d_bodies.y, bytes, cudaMemcpyDeviceToHost);
