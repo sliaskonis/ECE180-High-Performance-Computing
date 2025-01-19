@@ -1,5 +1,5 @@
 # Lab5 - N-Body Simulation Using CUDA
-This repository contains the three different implementations for N-Body Simulation:
+This repository contains three different implementations for an N-Body Simulation:
 - Serial: A straightforward C program that performs the N-Body simulation on the CPU.
 - OpenMP: A parallelized version of the N-Body simulation using OpenMP for multi-threaded execution on the CPU.
 - CUDA: A highly parallelized implementation leveraging CUDA to execute the N-Body simulation on GPUs for improved performance.
@@ -12,7 +12,8 @@ You can execute each implementation by using the provided makefiles in their dir
 make <flags>
 ```
 The following compilation flag is available:
-- SAVE_FINAL_COORDINATES: saves the final coordinates of each body at the end of the simulation to a text file. 
+- SAVE_FINAL_COORDINATES: saves the coordinates of each body at the end of the first iteration of the simulation to a text file. Final coordinates can be used for measuring the accuracy
+                          of the parallel implementations.
 
 Then start the simulation using:
 
@@ -47,7 +48,7 @@ python3 test_all.py <implementation> <iterations> <save_final_coordinates>
 
 ### **Get Graphs Script**
 
-The `getGraphs.py` script can be used in order to get a comparison graph between all different implementations. 
+The `getGraphs.py` script can be used in order to get a comparison graph between all different implementations.
 
 #### **Usage**
 
