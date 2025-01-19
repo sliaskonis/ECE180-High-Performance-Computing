@@ -8,7 +8,7 @@ This repository contains the three different implementations for N-Body Simulati
 Each implementation is located in the src directory, organized by its respective name.
 You can execute each implementation by using the provided makefiles in their directory:
 
-```bash 
+```bash
 make <flags>
 ```
 The following compilation flag is available:
@@ -16,11 +16,11 @@ The following compilation flag is available:
 
 Then start the simulation using:
 
-```bash 
+```bash
 ./nbody <number of particles>
 ```
 
-## **Scripts** 
+## **Scripts**
 This repository also contains some useful scripts for testing/profiling each implementation.
 
 ### **Test All Script**
@@ -39,7 +39,7 @@ python3 test_all.py <implementation> <iterations> <save_final_coordinates>
     - openmp: Run the OpenMP implementation
     - cuda: Run the CUDA implementation
     - all: Run all the implementations sequentially
-2. Iterations: 
+2. Iterations:
     - The number of iterations to execute each implementation
 3. Save final coordinates:
     - true: Save the final coordinates to a file
@@ -64,10 +64,10 @@ Project/
 │   ├── 30000
 │   ├── 65536
 │   └── 131072
-        ├── serial_times.txt
+│       ├── serial_times.txt
 │       ├── openmp_times.txt
-│       └── cuda_times.txt 
-├── src/ 
+│       └── cuda_times.txt
+└── src/
 
 Inside the results directory, each number in the name of the subdirectories represents the number of particles used for the execution of the implementations and inside these directories there are three files, one for each implementation, containing the corresponding statistics (time, iteractions).
 
