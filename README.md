@@ -78,5 +78,5 @@ For all assignments (OpenMP, CUDA etc), specific compilation instructions are pr
 ## Usage
 
 Each assignment folder includes detailed instructions for compiling and running the code. Refer to the `README.md` inside each folder for assignment-specific details.
-
+Also, under each assignment folder there is a detailed report about each assignment.
 
