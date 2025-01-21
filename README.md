@@ -36,13 +36,13 @@ The projects and assignments were built using the following tools and libraries:
 
 1. **Assignment 1: Code optimizations on Sobel filter**
     - Implement code optimization techniques to enhance the performance of the Sobel filter, focusing on methods like: loop interchange, loop unrolling, function inlining, etc.
-    - Use compiler optimizations to further improve the code performance (e.g register allocation, restrict pointer declarations)
-    - Code profiling and analysis
+    - Use compiler optimizations to further improve the code performance (e.g register allocation, restrict pointer declarations).
+    - Code profiling and analysis.
 
 2. **Assignment 2: Parallelizing KMeans clustering using OpenMP**
     - Identifying the parallelizable sections of the algorithm and implementing them using OpenMP.
     - Applying optimizations to enhance the parallelized algorithm, such as minimizing critical or atomic sections of the code and utilizing reduction techniques.
-    - Using AVX/SSE instructions to boost performance in areas where parallelization is not effective.
+    - Using AVX/SSE instructions (manual vectorization) to boost performance in areas where parallelization is not effective.
 
 3. **Assignment 3: Introduction to CUDA: Convolutions**
     - Implemented a 2D convolution filter by decomposing it into row-wise and column-wise operations, applying these separately to an image.
@@ -51,13 +51,16 @@ The projects and assignments were built using the following tools and libraries:
     - Addressed the problem of thread divergence by padding image arrays, eliminating boundary checks, and evaluating its impact on CPU and GPU performance.
 
 4. **Assignment 4: Histogram Equalization - Acceleration with CUDA**
-    - 
+    - The primary objective of this project was to reduce execution time of histogram calculation and image equalization as much as possible.
+    - Used CUDA to accelerate a histogram equalization algorithm for greyscale images.
+    - Explored a variety of optimizations techniques, including shared memory utilization, aggregation, privatization, and memory access optimizations (pinned, unified, texture memory).
+    - Investigated the use of CUDA streams to overlap dara transfers with kernel exectuion.
 
 5. **Assignment 5: N-Body Simulation Using CUDA**
-    - Parallelized the sequential n-body simulation using OpenMP
-    - Ported the n-body simulation to CUDA for further parallelization
+    - Parallelized the sequential n-body simulation using OpenMP.
+    - Ported the n-body simulation to CUDA for further parallelization.
     - Implemented different optimization strategies like: data distribution, tiling, loop unrolling, approximate optimizations etc.
-    - Profiled and compared all implementation (serial, OpenMP, CUDA)
+    - Profiled and compared all implementation (serial, OpenMP, CUDA).
 
 ## Installation
 
