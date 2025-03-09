@@ -60,6 +60,7 @@ python3 getGraphs.py <results dir>
 
 The results dir should have the following structure:
 
+```shell
 Project/
 ├── results/
 │   ├── 30000
@@ -69,6 +70,7 @@ Project/
 │       ├── openmp_times.txt
 │       └── cuda_times.txt
 └── src/
+```
 
 Inside the results directory, each number in the name of the subdirectories represents the number of particles used for the execution of the implementations and inside these directories there are three files, one for each implementation, containing the corresponding statistics (time, iteractions).
 
